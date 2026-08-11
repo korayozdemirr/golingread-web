@@ -76,7 +76,44 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
     },
   };
 
+  // Theme-specific word token highlighting styles
+  const themeWordStyles: Record<
+    ReadingTheme,
+    {
+      baseText: string;
+      hover: string;
+      selected: string;
+      saved: string;
+    }
+  > = {
+    cream: {
+      baseText: "text-[#1F2937]",
+      hover: "hover:bg-amber-100 hover:text-amber-950",
+      selected: "bg-amber-200 text-amber-950 font-medium ring-1 ring-amber-400/60",
+      saved: "bg-emerald-100/70 text-emerald-950 border-b border-emerald-400",
+    },
+    white: {
+      baseText: "text-[#111827]",
+      hover: "hover:bg-indigo-50 hover:text-indigo-950",
+      selected: "bg-indigo-100 text-indigo-950 font-medium ring-1 ring-indigo-300",
+      saved: "bg-emerald-50 text-emerald-950 border-b border-emerald-400",
+    },
+    sepia: {
+      baseText: "text-[#4A3B2C]",
+      hover: "hover:bg-[#E8DCC4] hover:text-[#2B2118]",
+      selected: "bg-[#DECDB2] text-[#2B2118] font-medium ring-1 ring-[#BAA88C]",
+      saved: "bg-[#E2D6BC] text-[#2B2118] border-b border-[#A69476]",
+    },
+    dark: {
+      baseText: "text-[#E5E7EB]",
+      hover: "hover:bg-white/15 hover:text-white",
+      selected: "bg-white/25 text-white font-medium ring-1 ring-white/40",
+      saved: "bg-emerald-950/60 text-emerald-300 border-b border-emerald-500/60",
+    },
+  };
+
   const currentTheme = themeStyles[readingTheme];
+  const currentWordTheme = themeWordStyles[readingTheme];
 
   return (
     <div className={`min-h-screen ${currentTheme.containerBg} transition-colors duration-200`}>
@@ -134,18 +171,22 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
                         const isSelected = selectedToken?.clean === token.clean;
                         const isSaved = savedWordsMap.has(token.clean.toLowerCase());
 
+                        let tokenClass = `rounded-sm px-0.5 transition-colors duration-150 text-left cursor-pointer inline-block ${currentWordTheme.baseText}`;
+
+                        if (isSelected) {
+                          tokenClass += ` ${currentWordTheme.selected}`;
+                        } else if (isSaved) {
+                          tokenClass += ` ${currentWordTheme.saved} ${currentWordTheme.hover}`;
+                        } else {
+                          tokenClass += ` ${currentWordTheme.hover}`;
+                        }
+
                         return (
                           <button
                             key={`${paragraph.id}-${tIndex}-${token.clean}`}
                             type="button"
                             onClick={() => setSelectedToken(token)}
-                            className={`rounded px-1 py-0.5 transition-all text-left cursor-pointer inline-block ${
-                              isSelected
-                                ? "bg-indigo-600 text-white ring-2 ring-indigo-600 dark:bg-indigo-500 dark:text-white"
-                                : isSaved
-                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 font-medium"
-                                : "hover:bg-[#EAE4D7] dark:hover:bg-[#2E2E2E]"
-                            }`}
+                            className={tokenClass}
                           >
                             {token.text}
                           </button>
