@@ -39,26 +39,35 @@ export const AuthModal: React.FC = () => {
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    if (!email || !password) {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
       setErrorMessage("Please enter both email and password.");
       setIsLoading(false);
       return;
     }
 
     if (mode === "signin") {
-      const { error } = await signInWithEmail(email, password);
+      const { error } = await signInWithEmail(trimmedEmail, trimmedPassword);
       if (error) {
         if (error.message.toLowerCase().includes("too many") || error.status === 429) {
           setErrorMessage("Too many sign-in attempts. Please wait a moment or sign in with Google.");
+        } else if (error.message.toLowerCase().includes("invalid login credentials")) {
+          setErrorMessage("Invalid email or password. If you haven't created an account yet, please switch to 'Create Account'.");
         } else {
           setErrorMessage(error.message);
         }
       }
     } else {
-      const { error, user } = await signUpWithEmail(email, password, name);
+      const { error, user } = await signUpWithEmail(trimmedEmail, trimmedPassword, name.trim());
       if (error) {
         if (error.message.toLowerCase().includes("too many") || error.message.toLowerCase().includes("rate limit") || error.status === 429) {
           setErrorMessage("Email rate limit reached. Please wait a few minutes before trying again, or use Google Sign-In.");
+        } else if (error.message.toLowerCase().includes("user already registered")) {
+          setErrorMessage("An account with this email already exists. Please switch to the 'Sign In' tab.");
+        } else if (error.message.toLowerCase().includes("invalid") && error.message.toLowerCase().includes("email")) {
+          setErrorMessage("Supabase reported this email address as invalid. Please check for typos, or disable 'Confirm email' in Supabase Dashboard -> Auth -> Providers -> Email.");
         } else {
           setErrorMessage(error.message);
         }

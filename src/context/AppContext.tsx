@@ -338,8 +338,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const signInWithEmail = useCallback(async (email: string, password: string): Promise<{ error: AuthError | null }> => {
     try {
+      const cleanEmail = email.trim().toLowerCase();
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password,
       });
       if (!error) {
@@ -357,12 +358,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     name?: string
   ): Promise<{ error: AuthError | null; user: User | null }> => {
     try {
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanName = name?.trim() || "Learner";
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
         options: {
           data: {
-            full_name: name || "Learner",
+            full_name: cleanName,
           },
         },
       });
