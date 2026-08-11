@@ -77,15 +77,62 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
     { id: "dark", name: "Dark", bg: "#16171B", text: "#E5E7EB", border: "#2E303A" },
   ];
 
+  const toolbarThemeStyles: Record<
+    ReadingTheme,
+    {
+      barBg: string;
+      border: string;
+      btnBg: string;
+      titleColor: string;
+      textColor: string;
+      btnBorder: string;
+    }
+  > = {
+    cream: {
+      barBg: "bg-[#FDFBF7]/95",
+      border: "border-[#E5E7EB]",
+      btnBg: "bg-white hover:bg-[#F3F4F6]",
+      titleColor: "text-[#111827]",
+      textColor: "text-[#374151]",
+      btnBorder: "border-[#E5E7EB]",
+    },
+    white: {
+      barBg: "bg-[#FFFFFF]/95",
+      border: "border-[#E5E7EB]",
+      btnBg: "bg-[#F9FAFB] hover:bg-[#F3F4F6]",
+      titleColor: "text-[#111827]",
+      textColor: "text-[#374151]",
+      btnBorder: "border-[#E5E7EB]",
+    },
+    sepia: {
+      barBg: "bg-[#F4ECD8]/95",
+      border: "border-[#DECDB2]",
+      btnBg: "bg-[#EFE5CD] hover:bg-[#E8DCC4]",
+      titleColor: "text-[#2B2118]",
+      textColor: "text-[#4A3B2C]",
+      btnBorder: "border-[#DECDB2]",
+    },
+    dark: {
+      barBg: "bg-[#121212]/95",
+      border: "border-[#2E2E2E]",
+      btnBg: "bg-[#1E1E1E] hover:bg-[#252528]",
+      titleColor: "text-[#F9FAFB]",
+      textColor: "text-[#D1D5DB]",
+      btnBorder: "border-[#2E2E2E]",
+    },
+  };
+
+  const currentBarTheme = toolbarThemeStyles[readingTheme];
+
   return (
-    <div className="sticky top-16 z-20 w-full border-b border-[#E5E7EB] dark:border-[#2E2E2E] bg-[#FDFBF7]/95 dark:bg-[#121212]/95 backdrop-blur-md transition-colors">
+    <div className={`sticky top-16 z-20 w-full border-b ${currentBarTheme.border} ${currentBarTheme.barBg} backdrop-blur-md transition-colors`}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
         {/* Left: Back Button & Title */}
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-xs font-semibold text-[#1F2937] dark:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#252528] transition-colors cursor-pointer shrink-0"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${currentBarTheme.btnBorder} ${currentBarTheme.btnBg} text-xs font-semibold ${currentBarTheme.textColor} transition-colors cursor-pointer shrink-0`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -93,7 +140,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
             <span className="hidden sm:inline">Stories</span>
           </button>
 
-          <span className="text-xs sm:text-sm font-bold text-[#1F2937] dark:text-[#E5E7EB] truncate">
+          <span className={`text-xs sm:text-sm font-bold ${currentBarTheme.titleColor} truncate`}>
             {storyTitle}
           </span>
         </div>
@@ -101,14 +148,14 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
         {/* Right: Audio Player & Reading Controls */}
         <div className="flex items-center gap-2">
           {/* TTS Audio Player Button */}
-          <div className="flex items-center rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-0.5">
+          <div className={`flex items-center rounded-xl border ${currentBarTheme.btnBorder} ${currentBarTheme.btnBg} p-0.5`}>
             <button
               type="button"
               onClick={handleToggleAudio}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                 isPlayingAudio
                   ? "bg-indigo-600 text-white animate-pulse"
-                  : "text-[#1F2937] dark:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#252528]"
+                  : `${currentBarTheme.textColor}`
               }`}
             >
               {isPlayingAudio ? (
@@ -140,7 +187,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
                   setIsPlayingAudio(false);
                 }
               }}
-              className="bg-transparent text-[11px] font-semibold text-[#6B7280] dark:text-[#9CA3AF] px-1 py-1 focus:outline-hidden cursor-pointer"
+              className={`bg-transparent text-[11px] font-semibold ${currentBarTheme.textColor} px-1 py-1 focus:outline-hidden cursor-pointer`}
             >
               <option value="0.8">0.8x</option>
               <option value="1.0">1.0x</option>
@@ -149,23 +196,23 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
           </div>
 
           {/* Quick Font Size Adjusters */}
-          <div className="hidden sm:flex items-center rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-0.5">
+          <div className={`hidden sm:flex items-center rounded-xl border ${currentBarTheme.btnBorder} ${currentBarTheme.btnBg} p-0.5`}>
             <button
               type="button"
               onClick={onDecreaseFontSize}
               title="Decrease Font Size"
-              className="px-2 py-1 text-xs font-bold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] cursor-pointer"
+              className={`px-2 py-1 text-xs font-bold ${currentBarTheme.textColor} hover:opacity-75 cursor-pointer`}
             >
               A-
             </button>
-            <span className="text-[11px] font-mono text-[#6B7280] dark:text-[#9CA3AF] px-1">
+            <span className={`text-[11px] font-mono ${currentBarTheme.textColor} px-1`}>
               {fontSize}px
             </span>
             <button
               type="button"
               onClick={onIncreaseFontSize}
               title="Increase Font Size"
-              className="px-2 py-1 text-xs font-bold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] cursor-pointer"
+              className={`px-2 py-1 text-xs font-bold ${currentBarTheme.textColor} hover:opacity-75 cursor-pointer`}
             >
               A+
             </button>
@@ -177,7 +224,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
               type="button"
               onClick={() => setShowSettingsMenu(!showSettingsMenu)}
               title="Reading Settings"
-              className="w-8 h-8 rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] flex items-center justify-center transition-colors cursor-pointer"
+              className={`w-8 h-8 rounded-xl border ${currentBarTheme.btnBorder} ${currentBarTheme.btnBg} ${currentBarTheme.textColor} flex items-center justify-center transition-colors cursor-pointer`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

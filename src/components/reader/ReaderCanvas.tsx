@@ -49,30 +49,53 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
       : "leading-[2.15]";
 
   // Theme style mapping
-  const themeStyles: Record<ReadingTheme, { containerBg: string; textColor: string; cardBg: string; borderColor: string }> = {
+  const themeStyles: Record<
+    ReadingTheme,
+    {
+      containerBg: string;
+      textColor: string;
+      headingColor: string;
+      mutedColor: string;
+      cardBg: string;
+      borderColor: string;
+      borderClass: string;
+    }
+  > = {
     cream: {
       containerBg: "bg-[#FDFBF7]",
       textColor: "text-[#1F2937]",
+      headingColor: "text-[#111827]",
+      mutedColor: "text-[#4B5563]",
       cardBg: "bg-[#FFFFFF]",
-      borderColor: "border-[#E5E7EB]",
+      borderColor: "#E5E7EB",
+      borderClass: "border-[#E5E7EB]",
     },
     white: {
       containerBg: "bg-[#FFFFFF]",
-      textColor: "text-[#111827]",
+      textColor: "text-[#1F2937]",
+      headingColor: "text-[#111827]",
+      mutedColor: "text-[#4B5563]",
       cardBg: "bg-[#FAFAFA]",
-      borderColor: "border-[#E5E7EB]",
+      borderColor: "#E5E7EB",
+      borderClass: "border-[#E5E7EB]",
     },
     sepia: {
       containerBg: "bg-[#F4ECD8]",
       textColor: "text-[#4A3B2C]",
+      headingColor: "text-[#2B2118]",
+      mutedColor: "text-[#6E543D]",
       cardBg: "bg-[#EFE5CD]",
-      borderColor: "border-[#DECDB2]",
+      borderColor: "#DECDB2",
+      borderClass: "border-[#DECDB2]",
     },
     dark: {
       containerBg: "bg-[#121212]",
       textColor: "text-[#E5E7EB]",
+      headingColor: "text-[#F9FAFB]",
+      mutedColor: "text-[#9CA3AF]",
       cardBg: "bg-[#1E1E1E]",
-      borderColor: "border-[#2E2E2E]",
+      borderColor: "#2E2E2E",
+      borderClass: "border-[#2E2E2E]",
     },
   };
 
@@ -137,20 +160,20 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
           {/* Main Reading Canvas (Col 8) */}
           <div className="lg:col-span-8 max-w-[68ch] mx-auto w-full">
             {/* Story Header */}
-            <header className="mb-8 pb-6 border-b border-[#E5E7EB] dark:border-[#2E2E2E]">
+            <header className={`mb-8 pb-6 border-b ${currentTheme.borderClass}`}>
               <div className="flex items-center gap-2 mb-3">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300">
                   Level: {story.level}
                 </span>
-                <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                <span className={`text-xs ${currentTheme.mutedColor}`}>
                   • {story.category} • {story.readTimeMinutes} min read
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] mb-2 font-serif">
+              <h1 className={`text-3xl sm:text-4xl font-bold tracking-tight ${currentTheme.headingColor} mb-2 font-serif`}>
                 {story.title}
               </h1>
-              <h2 className="text-sm sm:text-base font-medium text-[#6B7280] dark:text-[#9CA3AF] italic">
+              <h2 className={`text-sm sm:text-base font-medium ${currentTheme.mutedColor} italic`}>
                 {story.summary}
               </h2>
             </header>
@@ -224,13 +247,14 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
             <StoryQuiz
               quizQuestions={story.quiz}
               onCompleteStory={onCompleteStory}
+              readingTheme={readingTheme}
             />
           </div>
 
           {/* Right Sidebar (Col 4) */}
           <div className="hidden lg:block lg:col-span-4">
             <div className="sticky top-36">
-              <SponsorSidebar />
+              <SponsorSidebar readingTheme={readingTheme} />
             </div>
           </div>
         </div>
