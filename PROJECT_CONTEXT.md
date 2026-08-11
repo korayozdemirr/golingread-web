@@ -1,6 +1,6 @@
 # 📚 GoLingread - Project Context & Architecture Memory
 
-> **Version:** 0.1.0  
+> **Version:** 0.2.0  
 > **Last Updated:** August 2026  
 > **Repository:** `golingread-web`
 
@@ -14,7 +14,7 @@ The core thesis is that natural language acquisition happens effortlessly when l
 
 ---
 
-## 🛠️ 2. Tech Stack & Architecture
+## 🛠️ 2. Tech Stack & Route Architecture
 
 - **Framework:** Next.js (App Router, Turbopack, `src/` directory structure)
 - **Language:** TypeScript
@@ -23,7 +23,12 @@ The core thesis is that natural language acquisition happens effortlessly when l
   - `Lora` (Google Fonts - Serif for story reading text, optimal line-height `1.8`, tracking `0.01em`)
   - `Inter` (Google Fonts - Sans-serif for all UI controls, navigation, badges, and modals)
 - **Audio:** Web Speech API (`SpeechSynthesis`) for native, low-latency Text-to-Speech (TTS) audio with variable playback rates (0.8x, 1.0x, 1.2x)
-- **State & Data:** Client-side React state with tokenized mock stories (`src/data/mockStories.ts`), spaced-repetition vocabulary tracking, and CEFR level calibration.
+- **State & Data:** Centralized React Context (`AppContext.tsx`) with `localStorage` persistence across routes, tokenized mock stories (`src/data/mockStories.ts`), spaced-repetition vocabulary tracking, and CEFR level calibration.
+
+### 🌐 App Router Route Structure (SEO & AdSense Ready)
+- `/`: **Home & Story Catalog** — Krashen 95% Input Hero Section, CEFR level calibrator, search and filter bar, and story card grid.
+- `/story/[slug]`: **Dynamic Story Reader Route** — Dedicated reading canvas with dynamic Next.js `generateMetadata` (title, CEFR keywords, OpenGraph, Twitter card), `generateStaticParams` pre-rendering, interactive word tokens, TTS audio player, and breadcrumbs.
+- `/vocabulary`: **Standalone Vocabulary Hub** — Dedicated deck management page featuring interactive 3D flashcards (with *Again*, *Good*, *Mastered* ratings), progress statistics, word list search, audio pronunciations, and status filtering.
 
 ---
 
@@ -47,26 +52,32 @@ The core thesis is that natural language acquisition happens effortlessly when l
 
 ## 📱 4. Key Components & Implementation
 
-1. **Header & Navigation ([Navbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/layout/Navbar.tsx)):**
-   - Brand logo with reading icon, navigation links ("Stories", "My Vocabulary", "Level Test"), daily streak pill (🔥 5 Days), active CEFR level pill, and theme mode toggle.
-2. **Story Feed & Dynamic Match Engine ([HeroSection.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/HeroSection.tsx), [FilterBar.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/FilterBar.tsx), [StoryCard.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/StoryCard.tsx)):**
+1. **Global App State Provider ([AppContext.tsx](file:///Users/korayozdemir/golingread-web/src/context/AppContext.tsx)):**
+   - Centralizes user profile, CEFR level calibration, saved vocabulary deck, bookmark list, dark mode, and level test modal state with `localStorage` persistence across all pages.
+2. **Header & Navigation ([Navbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/layout/Navbar.tsx)):**
+   - Brand logo with reading icon, Next.js `<Link>` navigation ("Stories", "My Vocabulary", "Level Test"), daily streak pill (🔥 5 Days), active CEFR level pill, and theme mode toggle.
+3. **Story Feed & Dynamic Match Engine ([HeroSection.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/HeroSection.tsx), [FilterBar.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/FilterBar.tsx), [StoryCard.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/StoryCard.tsx)):**
    - Real-time CEFR level selector: Changing the learner's level instantly recalculates comprehension match percentages for all stories across the catalog.
    - Search bar and filters for CEFR levels (All, A1..C1) and genres (Mystery, Sci-Fi, Daily Life, History, Adventure, Philosophy).
-3. **Core Reader Canvas ([ReaderCanvas.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderCanvas.tsx)):**
+   - `StoryCard` uses Next.js `<Link>` to navigate to `/story/[slug]`.
+4. **Dynamic Story Reader ([page.tsx](file:///Users/korayozdemir/golingread-web/src/app/story/%5Bslug%5D/page.tsx), [StoryReaderView.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryReaderView.tsx)):**
+   - Server-side metadata generator for crawlability and social sharing.
+   - Breadcrumb navigation back to Stories (`/`).
+5. **Core Reader Canvas ([ReaderCanvas.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderCanvas.tsx)):**
    - Centered `max-w-[68ch]` reading container with Lora serif typography.
    - Zero-layout-shift tokenized clickable words.
    - Expandable Turkish paragraph translations toggle on demand.
-4. **Reader Toolbar ([ReaderToolbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderToolbar.tsx)):**
+6. **Reader Toolbar ([ReaderToolbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderToolbar.tsx)):**
    - Full story TTS speech player with speed control (0.8x, 1.0x, 1.2x).
    - Font size adjuster (`15px` to `26px`), line-height adjuster (`tight`, `relaxed`, `loose`), and 4 paper themes switcher.
-5. **Zero-Layout-Shift Word Popover ([WordPopover.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/WordPopover.tsx)):**
+7. **Zero-Layout-Shift Word Popover ([WordPopover.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/WordPopover.tsx)):**
    - Contextual Turkish translation, phonetic IPA pronunciation, part-of-speech badge, single-word audio pronunciation, and "+ Save to My Vocabulary" toggle.
-6. **3D Flip Flashcards ([FlashcardModal.tsx](file:///Users/korayozdemir/golingread-web/src/components/vocabulary/FlashcardModal.tsx)):**
-   - 3D flip card review session with spaced-repetition ratings (*Again*, *Good*, *Mastered*) and vocabulary management table.
-7. **Diagnostic Level Test ([LevelTestModal.tsx](file:///Users/korayozdemir/golingread-web/src/components/level-test/LevelTestModal.tsx)):**
-   - 5-question CEFR level assessment that calibrates the user profile and updates match scores.
-8. **Comprehension Quiz & Sponsorship ([StoryQuiz.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryQuiz.tsx), [SponsorSidebar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/SponsorSidebar.tsx)):**
-   - End-of-story comprehension checks and non-intrusive editorial premium sponsorship blocks.
+8. **Standalone Vocabulary Hub ([page.tsx](file:///Users/korayozdemir/golingread-web/src/app/vocabulary/page.tsx)):**
+   - 3D flip card review session with spaced-repetition ratings (*Again*, *Good*, *Mastered*), statistics banner, search filter, and vocabulary management table.
+9. **Diagnostic Level Test ([LevelTestModal.tsx](file:///Users/korayozdemir/golingread-web/src/components/level-test/LevelTestModal.tsx)):**
+   - 5-question CEFR level assessment that calibrates the user profile and updates match scores across all views.
+10. **Comprehension Quiz & Sponsorship ([StoryQuiz.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryQuiz.tsx), [SponsorSidebar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/SponsorSidebar.tsx)):**
+    - End-of-story comprehension checks and non-intrusive editorial premium sponsorship blocks.
 
 ---
 
@@ -81,3 +92,6 @@ The core thesis is that natural language acquisition happens effortlessly when l
 3. **UI Language Uniformity:**
    - *Problem:* Mixed Turkish and English UI labels across filters, navigation, and badges.
    - *Solution:* Standardized all UI elements to English, strictly limiting Turkish to contextual word popovers and paragraph translation reveals.
+4. **Dynamic URL Routing & Page Separation for SEO/AdSense:**
+   - *Problem:* Story reader and vocabulary deck were embedded in modals/state toggles on a single URL (`/`), preventing deep-linking, SEO indexing, and AdSense placement.
+   - *Solution:* Separated into dedicated Next.js App Router routes (`/story/[slug]`, `/vocabulary`, `/`) with `generateMetadata`, `generateStaticParams`, and global `AppContext` state persistence.

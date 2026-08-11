@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Story, WordToken, ReadingTheme, LineHeight } from "@/types";
 import { ReaderToolbar } from "./ReaderToolbar";
 import { WordPopover } from "./WordPopover";
@@ -159,6 +160,25 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Main Reading Canvas (Col 8) */}
           <div className="lg:col-span-8 max-w-[68ch] mx-auto w-full">
+            {/* Breadcrumb Navigation */}
+            <nav className="flex items-center gap-2 text-xs mb-5 font-medium" aria-label="Breadcrumb">
+              <Link
+                href="/"
+                className={`hover:underline flex items-center gap-1.5 font-bold ${currentTheme.mutedColor} hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span>Back to Stories</span>
+              </Link>
+              <span className={currentTheme.mutedColor}>/</span>
+              <span className={currentTheme.mutedColor}>{story.category}</span>
+              <span className={currentTheme.mutedColor}>/</span>
+              <span className={`font-semibold truncate max-w-[200px] ${currentTheme.textColor}`}>
+                {story.title}
+              </span>
+            </nav>
+
             {/* Story Header */}
             <header className={`mb-8 pb-6 border-b ${currentTheme.borderClass}`}>
               <div className="flex items-center gap-2 mb-3">

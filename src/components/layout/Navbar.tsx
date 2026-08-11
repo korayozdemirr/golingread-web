@@ -1,36 +1,29 @@
 "use client";
 
 import React from "react";
-import { UserProfile } from "@/types";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAppContext } from "@/context/AppContext";
 
-interface NavbarProps {
-  currentView: "feed" | "reader";
-  onNavigateHome: () => void;
-  onOpenVocabulary: () => void;
-  onOpenLevelTest: () => void;
-  savedWordsCount: number;
-  userProfile: UserProfile;
-  isDarkMode: boolean;
-  onToggleDarkMode: () => void;
-}
+export const Navbar: React.FC = () => {
+  const pathname = usePathname();
+  const {
+    userProfile,
+    vocabulary,
+    isDarkMode,
+    toggleDarkMode,
+    openLevelTestModal,
+  } = useAppContext();
 
-export const Navbar: React.FC<NavbarProps> = ({
-  currentView,
-  onNavigateHome,
-  onOpenVocabulary,
-  onOpenLevelTest,
-  savedWordsCount,
-  userProfile,
-  isDarkMode,
-  onToggleDarkMode,
-}) => {
+  const isHome = pathname === "/";
+  const isVocabulary = pathname === "/vocabulary";
+
   return (
     <header className="sticky top-0 z-30 w-full border-b border-[#E5E7EB] dark:border-[#2E2E2E] bg-[#FDFBF7]/90 dark:bg-[#121212]/90 backdrop-blur-md transition-colors duration-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Logo */}
-        <button
-          type="button"
-          onClick={onNavigateHome}
+        <Link
+          href="/"
           className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-hidden"
         >
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-500 dark:to-indigo-700 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
@@ -57,36 +50,38 @@ export const Navbar: React.FC<NavbarProps> = ({
               95% COMPREHENSIBLE INPUT
             </span>
           </div>
-        </button>
+        </Link>
 
         {/* Center: Main Navigation */}
         <nav className="hidden md:flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={onNavigateHome}
+          <Link
+            href="/"
             className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-              currentView === "feed"
+              isHome
                 ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
                 : "text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#1E1E1E]"
             }`}
           >
             📖 Stories
-          </button>
+          </Link>
 
-          <button
-            type="button"
-            onClick={onOpenVocabulary}
-            className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#1E1E1E] transition-colors cursor-pointer flex items-center gap-1.5"
+          <Link
+            href="/vocabulary"
+            className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+              isVocabulary
+                ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                : "text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#1E1E1E]"
+            }`}
           >
             <span>✨ My Vocabulary</span>
             <span className="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-[#E5E7EB] dark:bg-[#2E2E2E] text-[#1F2937] dark:text-[#E5E7EB]">
-              {savedWordsCount}
+              {vocabulary.length}
             </span>
-          </button>
+          </Link>
 
           <button
             type="button"
-            onClick={onOpenLevelTest}
+            onClick={openLevelTestModal}
             className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#1E1E1E] transition-colors cursor-pointer flex items-center gap-1"
           >
             <span>🎯 Level Test</span>
@@ -97,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-2.5 sm:gap-3">
           {/* Daily Streak */}
           <div
-            title="Daily Streak: 5 Days"
+            title={`Daily Streak: ${userProfile.dailyStreak} Days`}
             className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-bold"
           >
             <span>🔥</span>
@@ -107,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* User CEFR Level Pill */}
           <button
             type="button"
-            onClick={onOpenLevelTest}
+            onClick={openLevelTestModal}
             title="Click to test or recalibrate your level"
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
           >
@@ -118,7 +113,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Theme Toggle Button */}
           <button
             type="button"
-            onClick={onToggleDarkMode}
+            onClick={toggleDarkMode}
             aria-label="Toggle Light / Dark Mode"
             className="w-9 h-9 rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] flex items-center justify-center transition-colors cursor-pointer"
           >
@@ -147,30 +142,32 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Submenu Bar */}
       <div className="md:hidden flex items-center justify-around border-t border-[#E5E7EB] dark:border-[#2E2E2E] px-2 py-2 bg-[#FDFBF7] dark:bg-[#181818]">
-        <button
-          type="button"
-          onClick={onNavigateHome}
+        <Link
+          href="/"
           className={`px-3 py-1 text-xs font-medium rounded-lg ${
-            currentView === "feed"
+            isHome
               ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
               : "text-[#6B7280] dark:text-[#9CA3AF]"
           }`}
         >
           📖 Stories
-        </button>
-        <button
-          type="button"
-          onClick={onOpenVocabulary}
-          className="px-3 py-1 text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] flex items-center gap-1"
+        </Link>
+        <Link
+          href="/vocabulary"
+          className={`px-3 py-1 text-xs font-medium flex items-center gap-1 ${
+            isVocabulary
+              ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+              : "text-[#6B7280] dark:text-[#9CA3AF]"
+          }`}
         >
           <span>✨ Vocabulary</span>
           <span className="px-1 py-0.2 bg-[#E5E7EB] dark:bg-[#2E2E2E] rounded-full text-[10px]">
-            {savedWordsCount}
+            {vocabulary.length}
           </span>
-        </button>
+        </Link>
         <button
           type="button"
-          onClick={onOpenLevelTest}
+          onClick={openLevelTestModal}
           className="px-3 py-1 text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF]"
         >
           🎯 Level Test

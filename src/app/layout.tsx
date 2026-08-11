@@ -14,6 +14,8 @@ const lora = Lora({
   display: "swap",
 });
 
+import { AppProvider } from "@/context/AppContext";
+
 export const metadata: Metadata = {
   title: "GoLingread | 95% Comprehensible Input English Reading",
   description:
@@ -28,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${lora.variable}`}>
       <body className="min-h-screen flex flex-col font-sans selection:bg-indigo-500/20 selection:text-indigo-700 dark:selection:bg-indigo-400/20 dark:selection:text-indigo-300">
-        {children}
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );
