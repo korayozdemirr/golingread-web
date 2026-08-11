@@ -113,40 +113,40 @@ export const LevelTestModal: React.FC<LevelTestModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-lg rounded-3xl bg-[#FDFBF7] dark:bg-[#16171B] border border-[#E8E2D6] dark:border-[#2A2B32] shadow-2xl overflow-hidden p-6 sm:p-8">
+      <div className="w-full max-w-lg rounded-3xl bg-[#FDFBF7] dark:bg-[#16171B] border border-[#E5E7EB] dark:border-[#2E2E2E] shadow-2xl overflow-hidden p-6 sm:p-8">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#E8E2D6] dark:border-[#2A2B32]">
+        <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#E5E7EB] dark:border-[#2E2E2E]">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎯</span>
-            <h3 className="text-lg font-bold text-[#2A2723] dark:text-[#E6E4DF]">
-              Hızlı Seviye Belirleme Testi
+            <h3 className="text-lg font-bold text-[#1F2937] dark:text-[#E5E7EB]">
+              Quick CEFR Level Diagnostic
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-xs font-bold text-[#6E675F] hover:text-[#2A2723] dark:hover:text-[#E6E4DF]"
+            className="text-xs font-bold text-[#6B7280] hover:text-[#1F2937] dark:hover:text-[#E5E7EB]"
           >
-            ✕ Kapat
+            ✕ Close
           </button>
         </div>
 
         {!resultLevel ? (
           <div>
             {/* Progress */}
-            <div className="flex items-center justify-between text-xs text-[#6E675F] dark:text-[#9A9790] mb-2 font-semibold">
-              <span>Soru {currentStep + 1} / {TEST_QUESTIONS.length}</span>
-              <span>Hedef: {currentQ.level} Seviyesi</span>
+            <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF] mb-2 font-semibold">
+              <span>Question {currentStep + 1} of {TEST_QUESTIONS.length}</span>
+              <span>Target: {currentQ.level} Level</span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-[#E8E2D6] dark:bg-[#2A2B32] mb-6 overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-[#E5E7EB] dark:bg-[#2E2E2E] mb-6 overflow-hidden">
               <div
-                className="h-full bg-[#2D6A4F] dark:bg-[#52B788] transition-all duration-300"
+                className="h-full bg-indigo-600 dark:bg-indigo-500 transition-all duration-300"
                 style={{ width: `${((currentStep + 1) / TEST_QUESTIONS.length) * 100}%` }}
               />
             </div>
 
             {/* Question sentence */}
-            <p className="text-lg font-semibold text-[#2A2723] dark:text-[#E6E4DF] mb-6 font-serif">
+            <p className="text-lg font-semibold text-[#1F2937] dark:text-[#E5E7EB] mb-6 font-serif">
               &ldquo;{currentQ.sentence}&rdquo;
             </p>
 
@@ -161,8 +161,8 @@ export const LevelTestModal: React.FC<LevelTestModalProps> = ({
                     onClick={() => handleSelectAnswer(idx)}
                     className={`p-3.5 rounded-xl text-sm font-semibold border transition-all cursor-pointer text-left ${
                       isSelected
-                        ? "bg-[#2D6A4F] text-white border-[#2D6A4F] dark:bg-[#52B788] dark:text-[#121316] shadow-sm"
-                        : "bg-white dark:bg-[#1B1C20] text-[#2A2723] dark:text-[#E6E4DF] border-[#E8E2D6] dark:border-[#2A2B32] hover:bg-[#F7F4EE] dark:hover:bg-[#25262C]"
+                        ? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 shadow-2xs"
+                        : "bg-white dark:bg-[#1E1E1E] text-[#1F2937] dark:text-[#E5E7EB] border-[#E5E7EB] dark:border-[#2E2E2E] hover:bg-[#F9FAFB] dark:hover:bg-[#252528]"
                     }`}
                   >
                     {opt}
@@ -177,33 +177,33 @@ export const LevelTestModal: React.FC<LevelTestModalProps> = ({
               onClick={handleNext}
               className={`w-full py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 selectedAnswers[currentQ.id] !== undefined
-                  ? "bg-[#2D6A4F] text-white hover:bg-[#245640] dark:bg-[#52B788] dark:text-[#121316]"
-                  : "bg-[#E8E2D6] dark:bg-[#2A2B32] text-[#6E675F] cursor-not-allowed"
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500"
+                  : "bg-[#E5E7EB] dark:bg-[#2E2E2E] text-[#6B7280] cursor-not-allowed"
               }`}
             >
-              {currentStep === TEST_QUESTIONS.length - 1 ? "Testi Tamamla" : "Sonraki Soru →"}
+              {currentStep === TEST_QUESTIONS.length - 1 ? "Complete Assessment" : "Next Question →"}
             </button>
           </div>
         ) : (
           /* Test Result Screen */
           <div className="text-center py-4">
             <span className="text-5xl block mb-3">🎉</span>
-            <span className="text-xs uppercase font-bold tracking-wider text-[#6E675F] dark:text-[#9A9790]">
-              Tavsiye Edilen Seviyeniz
+            <span className="text-xs uppercase font-bold tracking-wider text-[#6B7280] dark:text-[#9CA3AF]">
+              Your Recommended Level
             </span>
-            <h2 className="text-4xl font-extrabold text-[#2D6A4F] dark:text-[#52B788] my-2">
-              {resultLevel} Seviyesi
+            <h2 className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 my-2">
+              Level {resultLevel}
             </h2>
-            <p className="text-xs sm:text-sm text-[#6E675F] dark:text-[#9A9790] max-w-sm mx-auto mb-6">
-              Krashen %95 formülüne göre hikayeleriniz <strong>{resultLevel}</strong> seviyesine göre kalibre edildi. %95+ Yeşil rozetli hikayeler doğrudan sizin için optimize edildi!
+            <p className="text-xs sm:text-sm text-[#6B7280] dark:text-[#9CA3AF] max-w-sm mx-auto mb-6">
+              Based on the 95% input formula, your stories have been calibrated for <strong>Level {resultLevel}</strong>. Green 95%+ match stories are perfectly suited for your natural acquisition!
             </p>
 
             <button
               type="button"
               onClick={handleFinish}
-              className="w-full py-3.5 rounded-xl bg-[#2D6A4F] text-white dark:bg-[#52B788] dark:text-[#121316] font-bold text-sm shadow-md hover:scale-[1.01] transition-transform cursor-pointer"
+              className="w-full py-3.5 rounded-xl bg-indigo-600 text-white dark:bg-indigo-500 font-bold text-sm shadow-md hover:bg-indigo-700 transition-colors cursor-pointer"
             >
-              Seviyemi Uygula & Okumaya Başla
+              Apply Level & Start Reading
             </button>
           </div>
         )}

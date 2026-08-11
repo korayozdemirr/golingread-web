@@ -15,7 +15,7 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "GoLingread | 95% Comprehensible Input Reading Platform",
+  title: "GoLingread | 95% Comprehensible Input English Reading",
   description:
     "Learn English naturally by reading stories with targeted 95%+ comprehension, instant word translations, and smart vocabulary tracking.",
 };
@@ -26,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr" className={`${inter.variable} ${lora.variable}`}>
-      <body className="min-h-screen flex flex-col font-sans selection:bg-[#2D6A4F]/20 selection:text-[#2D6A4F] dark:selection:bg-[#52B788]/20 dark:selection:text-[#52B788]">
+    <html lang="en" className={`${inter.variable} ${lora.variable}`}>
+      <body className="min-h-screen flex flex-col font-sans selection:bg-indigo-500/20 selection:text-indigo-700 dark:selection:bg-indigo-400/20 dark:selection:text-indigo-300">
         {children}
       </body>
     </html>

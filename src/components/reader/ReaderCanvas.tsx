@@ -52,9 +52,9 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
   const themeStyles: Record<ReadingTheme, { containerBg: string; textColor: string; cardBg: string; borderColor: string }> = {
     cream: {
       containerBg: "bg-[#FDFBF7]",
-      textColor: "text-[#2A2723]",
+      textColor: "text-[#1F2937]",
       cardBg: "bg-[#FFFFFF]",
-      borderColor: "border-[#E8E2D6]",
+      borderColor: "border-[#E5E7EB]",
     },
     white: {
       containerBg: "bg-[#FFFFFF]",
@@ -69,10 +69,10 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
       borderColor: "border-[#DECDB2]",
     },
     dark: {
-      containerBg: "bg-[#121316]",
-      textColor: "text-[#E6E4DF]",
-      cardBg: "bg-[#1B1C20]",
-      borderColor: "border-[#2A2B32]",
+      containerBg: "bg-[#121212]",
+      textColor: "text-[#E5E7EB]",
+      cardBg: "bg-[#1E1E1E]",
+      borderColor: "border-[#2E2E2E]",
     },
   };
 
@@ -100,27 +100,27 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
           {/* Main Reading Canvas (Col 8) */}
           <div className="lg:col-span-8 max-w-[68ch] mx-auto w-full">
             {/* Story Header */}
-            <header className="mb-8 pb-6 border-b border-[#E8E2D6]/80 dark:border-[#2A2B32]">
+            <header className="mb-8 pb-6 border-b border-[#E5E7EB] dark:border-[#2E2E2E]">
               <div className="flex items-center gap-2 mb-3">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E8F5E9] dark:bg-[#143820] text-[#1B5E20] dark:text-[#81C784]">
-                  {story.level} Seviyesi
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300">
+                  Level: {story.level}
                 </span>
-                <span className="text-xs text-[#6E675F] dark:text-[#9A9790]">
-                  • {story.category} • {story.readTimeMinutes} dk okuma
+                <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                  • {story.category} • {story.readTimeMinutes} min read
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#2A2723] dark:text-[#E6E4DF] mb-2 font-serif">
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] mb-2 font-serif">
                 {story.title}
               </h1>
-              <h2 className="text-sm sm:text-base font-medium text-[#6E675F] dark:text-[#9A9790] italic">
-                {story.titleTr}
+              <h2 className="text-sm sm:text-base font-medium text-[#6B7280] dark:text-[#9CA3AF] italic">
+                {story.summary}
               </h2>
             </header>
 
             {/* Reading Body with Interactive Tokens */}
             <div
-              className={`font-story ${lineHeightClass} transition-all duration-150 space-y-8`}
+              className={`font-story tracking-[0.01em] ${lineHeightClass} transition-all duration-150 space-y-8`}
               style={{ fontSize: `${fontSize}px` }}
             >
               {story.paragraphs.map((paragraph) => {
@@ -132,7 +132,7 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
                     <p className={`${currentTheme.textColor} flex flex-wrap gap-x-1.5 gap-y-1 items-baseline`}>
                       {paragraph.tokens.map((token, tIndex) => {
                         const isSelected = selectedToken?.clean === token.clean;
-                        const isSaved = savedWordsMap.has(token.clean);
+                        const isSaved = savedWordsMap.has(token.clean.toLowerCase());
 
                         return (
                           <button
@@ -141,10 +141,10 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
                             onClick={() => setSelectedToken(token)}
                             className={`rounded px-1 py-0.5 transition-all text-left cursor-pointer inline-block ${
                               isSelected
-                                ? "bg-[#2D6A4F] text-white ring-2 ring-[#2D6A4F] dark:bg-[#52B788] dark:text-[#121316]"
+                                ? "bg-indigo-600 text-white ring-2 ring-indigo-600 dark:bg-indigo-500 dark:text-white"
                                 : isSaved
-                                ? "bg-[#E8F5E9] text-[#1B5E20] dark:bg-[#143820] dark:text-[#81C784] font-medium"
-                                : "hover:bg-[#EAE4D7] dark:hover:bg-[#2A2B32]"
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 font-medium"
+                                : "hover:bg-[#EAE4D7] dark:hover:bg-[#2E2E2E]"
                             }`}
                           >
                             {token.text}
@@ -158,18 +158,18 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
                       <button
                         type="button"
                         onClick={() => toggleParagraphTranslation(paragraph.id)}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-[#6E675F] dark:text-[#9A9790] hover:text-[#2D6A4F] dark:hover:text-[#52B788] py-1 px-2 rounded-lg bg-[#F7F4EE] dark:bg-[#1B1C20] border border-[#E8E2D6] dark:border-[#2A2B32] transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] hover:text-indigo-600 dark:hover:text-indigo-400 py-1 px-2.5 rounded-lg bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] transition-colors cursor-pointer shadow-2xs"
                       >
                         <span>🇹🇷</span>
-                        <span>{isTranslationOpen ? "Çeviriyi Gizle" : "Paragraf Çevirisi"}</span>
+                        <span>{isTranslationOpen ? "Hide Turkish Translation" : "Show Turkish Translation"}</span>
                       </button>
                     </div>
 
                     {/* Revealed Turkish Paragraph Translation */}
                     {isTranslationOpen && (
-                      <div className="mt-3 p-4 rounded-xl bg-[#F7F4EE] dark:bg-[#1B1C20] border border-[#E8E2D6] dark:border-[#2A2B32] text-sm text-[#6E675F] dark:text-[#9A9790] font-sans leading-relaxed animate-in fade-in duration-200">
-                        <span className="text-[11px] font-bold text-[#2D6A4F] dark:text-[#52B788] uppercase tracking-wider block mb-1">
-                          Türkçe Karşılık:
+                      <div className="mt-3 p-4 rounded-xl bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] text-sm text-[#4B5563] dark:text-[#9CA3AF] font-sans leading-relaxed shadow-2xs animate-in fade-in duration-200">
+                        <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mb-1">
+                          Turkish Translation:
                         </span>
                         {paragraph.turkishTranslation}
                       </div>
@@ -199,7 +199,7 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
       {selectedToken && (
         <WordPopover
           token={selectedToken}
-          isSaved={savedWordsMap.has(selectedToken.clean)}
+          isSaved={savedWordsMap.has(selectedToken.clean.toLowerCase())}
           onToggleSave={onToggleSaveWord}
           onClose={() => setSelectedToken(null)}
         />

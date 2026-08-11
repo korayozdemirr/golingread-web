@@ -348,22 +348,22 @@ export function calculateStoryMatch(story: Story, userLevelNumber: number): {
     return {
       percentage,
       badgeType: "optimal",
-      badgeLabel: `%${percentage} Eşleşme • Optimal (%95+)`,
-      badgeColorClass: "bg-[#E8F5E9] text-[#1B5E20] border-[#A5D6A7] dark:bg-[#143820] dark:text-[#81C784] dark:border-[#2E7D32]",
+      badgeLabel: `${percentage}% Match • Optimal (95%+)`,
+      badgeColorClass: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800",
     };
   } else if (percentage >= 85) {
     return {
       percentage,
       badgeType: "challenging",
-      badgeLabel: `%${percentage} Eşleşme • Geliştirici (%85-94)`,
-      badgeColorClass: "bg-[#FFF8E1] text-[#B78103] border-[#FFE082] dark:bg-[#3E3211] dark:text-[#FFD54F] dark:border-[#66521A]",
+      badgeLabel: `${percentage}% Match • Challenging (85-94%)`,
+      badgeColorClass: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800",
     };
   } else {
     return {
       percentage,
       badgeType: "difficult",
-      badgeLabel: `%${percentage} Eşleşme • Zor Seviye`,
-      badgeColorClass: "bg-[#FFEBEE] text-[#C62828] border-[#FFCDD2] dark:bg-[#3B161B] dark:text-[#E57373] dark:border-[#5E1E26]",
+      badgeLabel: `${percentage}% Match • Advanced (<85%)`,
+      badgeColorClass: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
     };
   }
 }

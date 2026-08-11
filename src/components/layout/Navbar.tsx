@@ -25,7 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleDarkMode,
 }) => {
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-[#E8E2D6] dark:border-[#2A2B32] bg-[#FDFBF7]/90 dark:bg-[#121316]/90 backdrop-blur-md transition-colors duration-200">
+    <header className="sticky top-0 z-30 w-full border-b border-[#E5E7EB] dark:border-[#2E2E2E] bg-[#FDFBF7]/90 dark:bg-[#121212]/90 backdrop-blur-md transition-colors duration-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Logo */}
         <button
@@ -33,7 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={onNavigateHome}
           className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-hidden"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2D6A4F] to-[#1B4332] dark:from-[#52B788] dark:to-[#2D6A4F] flex items-center justify-center text-white dark:text-[#121316] shadow-xs group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-500 dark:to-indigo-700 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -50,11 +50,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </svg>
           </div>
           <div>
-            <div className="text-xl font-bold tracking-tight text-[#2A2723] dark:text-[#E6E4DF] leading-none">
-              GoLing<span className="text-[#2D6A4F] dark:text-[#52B788]">read</span>
+            <div className="text-xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] leading-none">
+              GoLing<span className="text-indigo-600 dark:text-indigo-400">read</span>
             </div>
-            <span className="text-[10px] font-medium tracking-wide text-[#6E675F] dark:text-[#9A9790]">
-              %95 COMPREHENSIBLE INPUT
+            <span className="text-[10px] font-medium tracking-wider text-[#6B7280] dark:text-[#9CA3AF]">
+              95% COMPREHENSIBLE INPUT
             </span>
           </div>
         </button>
@@ -66,20 +66,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onNavigateHome}
             className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               currentView === "feed"
-                ? "bg-[#E8F5E9] text-[#1B5E20] dark:bg-[#143820] dark:text-[#81C784]"
-                : "text-[#6E675F] dark:text-[#9A9790] hover:text-[#2A2723] dark:hover:text-[#E6E4DF] hover:bg-[#F4EFE6] dark:hover:bg-[#1B1C20]"
+                ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                : "text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#1E1E1E]"
             }`}
           >
-            📖 Hikayeler
+            📖 Stories
           </button>
 
           <button
             type="button"
             onClick={onOpenVocabulary}
-            className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-[#6E675F] dark:text-[#9A9790] hover:text-[#2A2723] dark:hover:text-[#E6E4DF] hover:bg-[#F4EFE6] dark:hover:bg-[#1B1C20] transition-colors cursor-pointer flex items-center gap-1.5"
+            className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#1E1E1E] transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <span>✨ Kelime Defterim</span>
-            <span className="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-[#E8E2D6] dark:bg-[#2A2B32] text-[#2A2723] dark:text-[#E6E4DF]">
+            <span>✨ My Vocabulary</span>
+            <span className="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-[#E5E7EB] dark:bg-[#2E2E2E] text-[#1F2937] dark:text-[#E5E7EB]">
               {savedWordsCount}
             </span>
           </button>
@@ -87,9 +87,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={onOpenLevelTest}
-            className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-[#6E675F] dark:text-[#9A9790] hover:text-[#2A2723] dark:hover:text-[#E6E4DF] hover:bg-[#F4EFE6] dark:hover:bg-[#1B1C20] transition-colors cursor-pointer flex items-center gap-1"
+            className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#1E1E1E] transition-colors cursor-pointer flex items-center gap-1"
           >
-            <span>🎯 Seviye Testi</span>
+            <span>🎯 Level Test</span>
           </button>
         </nav>
 
@@ -97,30 +97,30 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-2.5 sm:gap-3">
           {/* Daily Streak */}
           <div
-            title="Günlük Seri: 5 Gün"
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FFF3E0] dark:bg-[#332211] border border-[#FFE0B2] dark:border-[#553818] text-[#E65100] dark:text-[#FFB74D] text-xs font-bold"
+            title="Daily Streak: 5 Days"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-bold"
           >
             <span>🔥</span>
-            <span>{userProfile.dailyStreak} Gün</span>
+            <span>{userProfile.dailyStreak} Days</span>
           </div>
 
           {/* User CEFR Level Pill */}
           <button
             type="button"
             onClick={onOpenLevelTest}
-            title="Seviyeni değiştirmek veya test etmek için tıkla"
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] dark:bg-[#143820] border border-[#A5D6A7] dark:border-[#2E7D32] text-[#1B5E20] dark:text-[#81C784] text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
+            title="Click to test or recalibrate your level"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
           >
-            <span className="w-2 h-2 rounded-full bg-[#2E7D32] dark:bg-[#81C784]" />
-            <span>Seviye: {userProfile.level}</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Level: {userProfile.level}</span>
           </button>
 
           {/* Theme Toggle Button */}
           <button
             type="button"
             onClick={onToggleDarkMode}
-            aria-label="Koyu / Açık Tema Değiştir"
-            className="w-9 h-9 rounded-xl border border-[#E8E2D6] dark:border-[#2A2B32] bg-[#FFFFFF] dark:bg-[#1B1C20] text-[#6E675F] dark:text-[#9A9790] hover:text-[#2A2723] dark:hover:text-[#E6E4DF] flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Toggle Light / Dark Mode"
+            className="w-9 h-9 rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] flex items-center justify-center transition-colors cursor-pointer"
           >
             {isDarkMode ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,34 +146,34 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Mobile Submenu Bar */}
-      <div className="md:hidden flex items-center justify-around border-t border-[#E8E2D6]/80 dark:border-[#2A2B32] px-2 py-2 bg-[#FAF7F2] dark:bg-[#16171B]">
+      <div className="md:hidden flex items-center justify-around border-t border-[#E5E7EB] dark:border-[#2E2E2E] px-2 py-2 bg-[#FDFBF7] dark:bg-[#181818]">
         <button
           type="button"
           onClick={onNavigateHome}
           className={`px-3 py-1 text-xs font-medium rounded-lg ${
             currentView === "feed"
-              ? "bg-[#E8F5E9] text-[#1B5E20] dark:bg-[#143820] dark:text-[#81C784]"
-              : "text-[#6E675F] dark:text-[#9A9790]"
+              ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+              : "text-[#6B7280] dark:text-[#9CA3AF]"
           }`}
         >
-          📖 Hikayeler
+          📖 Stories
         </button>
         <button
           type="button"
           onClick={onOpenVocabulary}
-          className="px-3 py-1 text-xs font-medium text-[#6E675F] dark:text-[#9A9790] flex items-center gap-1"
+          className="px-3 py-1 text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] flex items-center gap-1"
         >
-          <span>✨ Kelimelerim</span>
-          <span className="px-1 py-0.2 bg-[#E8E2D6] dark:bg-[#2A2B32] rounded-full text-[10px]">
+          <span>✨ Vocabulary</span>
+          <span className="px-1 py-0.2 bg-[#E5E7EB] dark:bg-[#2E2E2E] rounded-full text-[10px]">
             {savedWordsCount}
           </span>
         </button>
         <button
           type="button"
           onClick={onOpenLevelTest}
-          className="px-3 py-1 text-xs font-medium text-[#6E675F] dark:text-[#9A9790]"
+          className="px-3 py-1 text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF]"
         >
-          🎯 Seviye Testi
+          🎯 Level Test
         </button>
       </div>
     </header>

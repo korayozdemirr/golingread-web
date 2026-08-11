@@ -22,10 +22,10 @@ export const StoryCard: React.FC<StoryCardProps> = ({
   const match = calculateStoryMatch(story, userProfile.levelNumber);
 
   return (
-    <article className="group flex flex-col justify-between rounded-2xl bg-[#FFFFFF] dark:bg-[#1B1C20] border border-[#E8E2D6] dark:border-[#2A2B32] overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+    <article className="group flex flex-col justify-between rounded-2xl bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
       {/* Top Media & Tags */}
       <div>
-        <div className="relative h-48 w-full overflow-hidden bg-[#E8E2D6] dark:bg-[#25262C]">
+        <div className="relative h-48 w-full overflow-hidden bg-[#F3F4F6] dark:bg-[#252528]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={story.coverImage}
@@ -39,7 +39,7 @@ export const StoryCard: React.FC<StoryCardProps> = ({
 
           {/* Level & Category badges */}
           <div className="absolute top-3 left-3 flex items-center gap-1.5">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#121316]/80 backdrop-blur-md text-white border border-white/20">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#121212]/80 backdrop-blur-md text-white border border-white/20">
               {story.level}
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-black/40 backdrop-blur-md text-white/90">
@@ -54,11 +54,11 @@ export const StoryCard: React.FC<StoryCardProps> = ({
               e.stopPropagation();
               onToggleBookmark(story.id);
             }}
-            title={isBookmarked ? "Kaydedilenlerden Çıkar" : "Kaydet"}
-            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#121316]/80 backdrop-blur-md text-white flex items-center justify-center hover:scale-110 transition-transform cursor-pointer"
+            title={isBookmarked ? "Remove from bookmarks" : "Bookmark this story"}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#121212]/80 backdrop-blur-md text-white flex items-center justify-center hover:scale-110 transition-transform cursor-pointer"
           >
             {isBookmarked ? (
-              <svg className="w-4 h-4 text-[#F59E0B] fill-current" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 24 24">
                 <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
             ) : (
@@ -81,10 +81,10 @@ export const StoryCard: React.FC<StoryCardProps> = ({
               <span
                 className={`w-2 h-2 rounded-full ${
                   match.badgeType === "optimal"
-                    ? "bg-[#2E7D32] dark:bg-[#81C784]"
+                    ? "bg-emerald-500"
                     : match.badgeType === "challenging"
-                    ? "bg-[#F57F17] dark:bg-[#FFD54F]"
-                    : "bg-[#C62828] dark:text-[#E57373]"
+                    ? "bg-amber-500"
+                    : "bg-slate-400"
                 }`}
               />
               {match.badgeLabel}
@@ -94,20 +94,17 @@ export const StoryCard: React.FC<StoryCardProps> = ({
 
         {/* Card Body */}
         <div className="p-5">
-          <div className="flex items-center gap-2 text-xs text-[#6E675F] dark:text-[#9A9790] mb-2 font-medium">
-            <span>⏱️ {story.readTimeMinutes} dk okuma</span>
+          <div className="flex items-center gap-2 text-xs text-[#6B7280] dark:text-[#9CA3AF] mb-2 font-medium">
+            <span>⏱️ {story.readTimeMinutes} min read</span>
             <span>•</span>
-            <span>📝 {story.wordCount} kelime</span>
+            <span>📝 {story.wordCount} words</span>
           </div>
 
-          <h2 className="text-xl font-bold tracking-tight text-[#2A2723] dark:text-[#E6E4DF] mb-1 group-hover:text-[#2D6A4F] dark:group-hover:text-[#52B788] transition-colors line-clamp-1">
+          <h2 className="text-xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
             {story.title}
           </h2>
-          <h3 className="text-xs font-medium text-[#6E675F] dark:text-[#9A9790] mb-3 line-clamp-1 italic">
-            {story.titleTr}
-          </h3>
 
-          <p className="text-xs sm:text-sm text-[#6E675F] dark:text-[#9A9790] leading-relaxed line-clamp-2">
+          <p className="text-xs sm:text-sm text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed line-clamp-2">
             {story.summary}
           </p>
         </div>
@@ -118,9 +115,9 @@ export const StoryCard: React.FC<StoryCardProps> = ({
         <button
           type="button"
           onClick={() => onSelectStory(story)}
-          className="w-full py-2.5 px-4 rounded-xl bg-[#F7F4EE] dark:bg-[#25262C] group-hover:bg-[#2D6A4F] group-hover:text-white dark:group-hover:bg-[#52B788] dark:group-hover:text-[#121316] text-xs sm:text-sm font-semibold text-[#2A2723] dark:text-[#E6E4DF] transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-xl bg-[#F7F4EE] dark:bg-[#252528] group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500 text-xs sm:text-sm font-semibold text-[#1F2937] dark:text-[#E5E7EB] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
         >
-          <span>Hikayeyi Oku</span>
+          <span>Start Reading</span>
           <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>

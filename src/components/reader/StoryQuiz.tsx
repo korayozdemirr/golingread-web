@@ -40,11 +40,11 @@ export const StoryQuiz: React.FC<StoryQuizProps> = ({
   }
 
   return (
-    <section className="mt-12 pt-8 border-t-2 border-dashed border-[#E8E2D6] dark:border-[#2A2B32]">
+    <section className="mt-12 pt-8 border-t-2 border-dashed border-[#E5E7EB] dark:border-[#2E2E2E]">
       <div className="flex items-center gap-2 mb-6">
         <span className="text-xl">🎯</span>
-        <h3 className="text-xl font-bold tracking-tight text-[#2A2723] dark:text-[#E6E4DF]">
-          Okuduğunu Anlama Kontrolü (Comprehension Check)
+        <h3 className="text-xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB]">
+          Comprehension Check
         </h3>
       </div>
 
@@ -56,25 +56,25 @@ export const StoryQuiz: React.FC<StoryQuizProps> = ({
           return (
             <div
               key={q.id}
-              className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1B1C20] border border-[#E8E2D6] dark:border-[#2A2B32]"
+              className="p-5 rounded-2xl bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E]"
             >
-              <h4 className="text-base font-semibold text-[#2A2723] dark:text-[#E6E4DF] mb-4">
+              <h4 className="text-base font-semibold text-[#1F2937] dark:text-[#E5E7EB] mb-4">
                 {qIndex + 1}. {q.question}
               </h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
                 {q.options.map((option, optIndex) => {
                   const isSelected = userChoice === optIndex;
-                  let buttonStyle = "bg-[#F7F4EE] dark:bg-[#25262C] text-[#2A2723] dark:text-[#E6E4DF] border-[#E8E2D6] dark:border-[#2A2B32]";
+                  let buttonStyle = "bg-[#F7F4EE] dark:bg-[#252528] text-[#1F2937] dark:text-[#E5E7EB] border-[#E5E7EB] dark:border-[#2E2E2E]";
 
                   if (showResults) {
                     if (optIndex === q.correctIndex) {
-                      buttonStyle = "bg-[#E8F5E9] text-[#1B5E20] border-[#A5D6A7] font-bold dark:bg-[#143820] dark:text-[#81C784] dark:border-[#2E7D32]";
+                      buttonStyle = "bg-emerald-100 text-emerald-800 border-emerald-300 font-bold dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800";
                     } else if (isSelected) {
-                      buttonStyle = "bg-[#FFEBEE] text-[#C62828] border-[#FFCDD2] dark:bg-[#3B161B] dark:text-[#E57373] dark:border-[#5E1E26]";
+                      buttonStyle = "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800";
                     }
                   } else if (isSelected) {
-                    buttonStyle = "bg-[#2D6A4F] text-white border-[#2D6A4F] dark:bg-[#52B788] dark:text-[#121316]";
+                    buttonStyle = "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500";
                   }
 
                   return (
@@ -94,12 +94,12 @@ export const StoryQuiz: React.FC<StoryQuizProps> = ({
                 <div
                   className={`p-3 rounded-xl text-xs mt-3 ${
                     isCorrect
-                      ? "bg-[#E8F5E9] text-[#1B5E20] dark:bg-[#143820] dark:text-[#81C784]"
-                      : "bg-[#FFF8E1] text-[#795548] dark:bg-[#3E3211] dark:text-[#FFE082]"
+                      ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+                      : "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
                   }`}
                 >
                   <p className="font-semibold mb-0.5">
-                    {isCorrect ? "✓ Doğru!" : "✗ Doğru Cevap: " + q.options[q.correctIndex]}
+                    {isCorrect ? "✓ Correct!" : "✗ Correct Answer: " + q.options[q.correctIndex]}
                   </p>
                   <p className="opacity-90">{q.explanation}</p>
                 </div>
@@ -112,11 +112,11 @@ export const StoryQuiz: React.FC<StoryQuizProps> = ({
       <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         {showResults ? (
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-[#2A2723] dark:text-[#E6E4DF]">
-              Skor: {score} / {quizQuestions.length}
+            <span className="text-sm font-bold text-[#1F2937] dark:text-[#E5E7EB]">
+              Score: {score} / {quizQuestions.length}
             </span>
-            <span className="text-xs px-3 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] font-bold dark:bg-[#143820] dark:text-[#81C784]">
-              ✓ Hikaye Tamamlandı (+1 Okuma İstatistiği)
+            <span className="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold dark:bg-emerald-950/70 dark:text-emerald-300">
+              ✓ Story Completed (+1 Reading Stat)
             </span>
           </div>
         ) : (
@@ -126,11 +126,11 @@ export const StoryQuiz: React.FC<StoryQuizProps> = ({
             onClick={handleCheckAnswers}
             className={`w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm transition-all cursor-pointer ${
               allAnswered
-                ? "bg-[#2D6A4F] text-white hover:bg-[#245640] dark:bg-[#52B788] dark:text-[#121316] shadow-sm"
-                : "bg-[#E8E2D6] dark:bg-[#2A2B32] text-[#6E675F] cursor-not-allowed"
+                ? "bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 shadow-xs"
+                : "bg-[#E5E7EB] dark:bg-[#2E2E2E] text-[#6B7280] cursor-not-allowed"
             }`}
           >
-            Cevapları Kontrol Et ve Bitir
+            Check Answers & Complete
           </button>
         )}
       </div>

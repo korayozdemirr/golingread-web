@@ -23,14 +23,14 @@ const CATEGORIES: (StoryCategory | "ALL")[] = [
   "Philosophy",
 ];
 
-const CATEGORY_NAMES_TR: Record<string, string> = {
-  ALL: "Tüm Türler",
-  Mystery: "Gizem / Macera",
-  "Sci-Fi": "Bilim Kurgu",
-  "Daily Life": "Günlük Yaşam",
-  History: "Tarih",
-  Adventure: "Keşif",
-  Philosophy: "Felsefe",
+const CATEGORY_NAMES_EN: Record<string, string> = {
+  ALL: "All Categories",
+  Mystery: "Mystery",
+  "Sci-Fi": "Sci-Fi",
+  "Daily Life": "Daily Life",
+  History: "History",
+  Adventure: "Adventure",
+  Philosophy: "Philosophy",
 };
 
 const LEVELS: (CEFRLevel | "ALL")[] = ["ALL", "A1", "A2", "B1", "B2", "C1"];
@@ -50,7 +50,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Search Bar */}
         <div className="relative flex-1 max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6E675F] dark:text-[#9A9790]">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B7280] dark:text-[#9CA3AF]">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -64,14 +64,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Hikaye başlığı veya tema ara..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E8E2D6] dark:border-[#2A2B32] bg-[#FFFFFF] dark:bg-[#1B1C20] text-sm text-[#2A2723] dark:text-[#E6E4DF] placeholder-[#6E675F]/60 focus:outline-hidden focus:ring-2 focus:ring-[#2D6A4F] dark:focus:ring-[#52B788] transition-all"
+            placeholder="Search stories by title or theme..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-sm text-[#1F2937] dark:text-[#E5E7EB] placeholder-[#6B7280]/60 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 transition-all"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => onSearchChange("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-[#6E675F] hover:text-[#2A2723] dark:hover:text-[#E6E4DF] cursor-pointer"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-[#6B7280] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] cursor-pointer"
             >
               ✕
             </button>
@@ -79,17 +79,17 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
 
         {/* Stories Count */}
-        <div className="text-xs font-semibold text-[#6E675F] dark:text-[#9A9790]">
-          {totalStoriesCount} Hikaye Listeleniyor
+        <div className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF]">
+          {totalStoriesCount} Stories Available
         </div>
       </div>
 
       {/* Filter Row: Level Pills & Category Pills */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E2D6]/80 dark:border-[#2A2B32]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#2E2E2E]">
         {/* CEFR Level Filter */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          <span className="text-xs font-bold text-[#6E675F] dark:text-[#9A9790] mr-1 hidden sm:inline">
-            Seviye:
+          <span className="text-xs font-bold text-[#6B7280] dark:text-[#9CA3AF] mr-1 hidden sm:inline">
+            Level:
           </span>
           {LEVELS.map((lvl) => {
             const isSelected = selectedLevel === lvl;
@@ -100,11 +100,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 onClick={() => onSelectLevel(lvl)}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer shrink-0 ${
                   isSelected
-                    ? "bg-[#2A2723] text-white dark:bg-[#E6E4DF] dark:text-[#121316]"
-                    : "bg-[#FFFFFF] dark:bg-[#1B1C20] text-[#6E675F] dark:text-[#9A9790] border border-[#E8E2D6] dark:border-[#2A2B32] hover:bg-[#F7F4EE] dark:hover:bg-[#25262C]"
+                    ? "bg-[#1F2937] text-white dark:bg-[#E5E7EB] dark:text-[#121212]"
+                    : "bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] border border-[#E5E7EB] dark:border-[#2E2E2E] hover:bg-[#F9FAFB] dark:hover:bg-[#252528]"
                 }`}
               >
-                {lvl === "ALL" ? "Tümü" : lvl}
+                {lvl === "ALL" ? "All Levels" : lvl}
               </button>
             );
           })}
@@ -121,11 +121,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 onClick={() => onSelectCategory(cat)}
                 className={`px-3 py-1 text-xs font-medium rounded-full transition-colors cursor-pointer shrink-0 ${
                   isSelected
-                    ? "bg-[#2D6A4F] text-white dark:bg-[#52B788] dark:text-[#121316]"
-                    : "bg-[#FFFFFF] dark:bg-[#1B1C20] text-[#6E675F] dark:text-[#9A9790] border border-[#E8E2D6] dark:border-[#2A2B32] hover:bg-[#F7F4EE] dark:hover:bg-[#25262C]"
+                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                    : "bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] border border-[#E5E7EB] dark:border-[#2E2E2E] hover:bg-[#F9FAFB] dark:hover:bg-[#252528]"
                 }`}
               >
-                {CATEGORY_NAMES_TR[cat] || cat}
+                {CATEGORY_NAMES_EN[cat] || cat}
               </button>
             );
           })}

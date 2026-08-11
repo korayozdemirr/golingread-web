@@ -58,7 +58,7 @@ export default function Home() {
 
   // User Profile state
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: "Öğrenici",
+    name: "Learner",
     level: "A2",
     levelNumber: 2,
     dailyStreak: 5,
@@ -128,7 +128,9 @@ export default function Home() {
   // Word Save / Toggle from Reader
   const handleToggleSaveWord = (token: WordToken) => {
     setVocabulary((prev) => {
-      const existsIndex = prev.findIndex((item) => item.cleanWord.toLowerCase() === token.clean.toLowerCase());
+      const existsIndex = prev.findIndex(
+        (item) => item.cleanWord.toLowerCase() === token.clean.toLowerCase()
+      );
       if (existsIndex >= 0) {
         // Remove
         return prev.filter((_, idx) => idx !== existsIndex);
@@ -142,7 +144,7 @@ export default function Home() {
           ipa: token.ipa,
           partOfSpeech: token.partOfSpeech,
           exampleSentence: token.exampleSentence,
-          storyTitle: activeStory?.title || "Okuma",
+          storyTitle: activeStory?.title || "Reading",
           savedAt: new Date().toISOString(),
           status: "learning",
           reviewCount: 0,
@@ -182,7 +184,6 @@ export default function Home() {
     const matchesSearch =
       searchQuery === "" ||
       story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      story.titleTr.toLowerCase().includes(searchQuery.toLowerCase()) ||
       story.summary.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesLevel = selectedLevelFilter === "ALL" || story.level === selectedLevelFilter;
@@ -193,7 +194,7 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FDFBF7] dark:bg-[#121316] text-[#2A2723] dark:text-[#E6E4DF] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#FDFBF7] dark:bg-[#121212] text-[#1F2937] dark:text-[#E5E7EB] transition-colors duration-200">
       {/* Top Navigation */}
       <Navbar
         currentView={currentView}
@@ -229,13 +230,13 @@ export default function Home() {
 
           {/* Story Cards Grid */}
           {filteredStories.length === 0 ? (
-            <div className="text-center py-20 bg-white dark:bg-[#1B1C20] rounded-3xl border border-[#E8E2D6] dark:border-[#2A2B32]">
+            <div className="text-center py-20 bg-white dark:bg-[#1E1E1E] rounded-3xl border border-[#E5E7EB] dark:border-[#2E2E2E]">
               <span className="text-4xl block mb-2">🔍</span>
-              <h3 className="text-lg font-bold text-[#2A2723] dark:text-[#E6E4DF]">
-                Uygun hikaye bulunamadı
+              <h3 className="text-lg font-bold text-[#1F2937] dark:text-[#E5E7EB]">
+                No stories found
               </h3>
-              <p className="text-xs text-[#6E675F] dark:text-[#9A9790] mt-1">
-                Lütfen arama teriminizi veya filtre tercihlerinizi değiştirin.
+              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-1">
+                Please adjust your search keywords or filter criteria to see available stories.
               </p>
             </div>
           ) : (
