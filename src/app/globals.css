@@ -12,16 +12,14 @@
   --font-serif-fallback: Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #121316;
-    --foreground: #E6E4DF;
-    --muted: #9A9790;
-    --surface: #1B1C20;
-    --surface-border: #2A2B32;
-    --accent: #52B788;
-    --accent-light: #162E22;
-  }
+.dark {
+  --background: #121316;
+  --foreground: #E6E4DF;
+  --muted: #9A9790;
+  --surface: #1B1C20;
+  --surface-border: #2A2B32;
+  --accent: #52B788;
+  --accent-light: #162E22;
 }
 
 @theme {
@@ -39,4 +37,23 @@ body {
 
 .font-story {
   font-family: var(--font-serif);
+}
+
+/* Custom discreet scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(110, 103, 95, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(110, 103, 95, 0.4);
 }

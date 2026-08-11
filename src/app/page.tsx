@@ -1,220 +1,288 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { Story, WordToken, VocabularyItem, UserProfile, CEFRLevel, StoryCategory } from "@/types";
+import { MOCK_STORIES } from "@/data/mockStories";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { HeroSection } from "@/components/feed/HeroSection";
+import { FilterBar } from "@/components/feed/FilterBar";
+import { StoryCard } from "@/components/feed/StoryCard";
+import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
+import { FlashcardModal } from "@/components/vocabulary/FlashcardModal";
+import { LevelTestModal } from "@/components/level-test/LevelTestModal";
 
-interface WordData {
-  word: string;
-  clean: string;
-  translation: string;
-  ipa: string;
-  partOfSpeech: string;
-  isNew?: boolean;
-}
+const LEVEL_MAP: Record<CEFRLevel, number> = {
+  A1: 1,
+  A2: 2,
+  B1: 3,
+  B2: 4,
+  C1: 5,
+  C2: 6,
+};
 
-const sampleStoryTokens: WordData[] = [
-  { word: "Leo", clean: "Leo", translation: "Leo (isim)", ipa: "/ˈliː.oʊ/", partOfSpeech: "noun" },
-  { word: "walked", clean: "walked", translation: "yürüdü", ipa: "/wɔːkt/", partOfSpeech: "verb" },
-  { word: "into", clean: "into", translation: "içine doğru", ipa: "/ˈɪn.tuː/", partOfSpeech: "prep" },
-  { word: "the", clean: "the", translation: "o / belirli artikel", ipa: "/ðə/", partOfSpeech: "det" },
-  { word: "quiet", clean: "quiet", translation: "sessiz, sakin", ipa: "/ˈkwaɪ.ət/", partOfSpeech: "adj" },
-  { word: "library,", clean: "library", translation: "kütüphane", ipa: "/ˈlaɪ.brər.i/", partOfSpeech: "noun" },
-  { word: "holding", clean: "holding", translation: "tutarak, elinde tutarak", ipa: "/ˈhoʊl.dɪŋ/", partOfSpeech: "verb" },
-  { word: "an", clean: "an", translation: "bir", ipa: "/æn/", partOfSpeech: "det" },
-  { word: "ancient", clean: "ancient", translation: "antik, çok eski", ipa: "/ˈeɪn.ʃənt/", partOfSpeech: "adj", isNew: true },
-  { word: "journal.", clean: "journal", translation: "günlük / seyir defteri", ipa: "/ˈdʒɜːr.nəl/", partOfSpeech: "noun" },
-  { word: "He", clean: "He", translation: "O (erkek)", ipa: "/hiː/", partOfSpeech: "pron" },
-  { word: "knew", clean: "knew", translation: "biliyordu", ipa: "/nuː/", partOfSpeech: "verb" },
-  { word: "that", clean: "that", translation: "şu / ki", ipa: "/ðæt/", partOfSpeech: "conj" },
-  { word: "each", clean: "each", translation: "her bir", ipa: "/iːtʃ/", partOfSpeech: "det" },
-  { word: "page", clean: "page", translation: "sayfa", ipa: "/peɪdʒ/", partOfSpeech: "noun" },
-  { word: "contained", clean: "contained", translation: "içeriyordu", ipa: "/kənˈteɪnd/", partOfSpeech: "verb" },
-  { word: "fascinating", clean: "fascinating", translation: "büyüleyici, hayranlık uyandırıcı", ipa: "/ˈfæs.ən.eɪ.tɪŋ/", partOfSpeech: "adj", isNew: true },
-  { word: "secrets", clean: "secrets", translation: "sırlar", ipa: "/ˈsiː.krəts/", partOfSpeech: "noun" },
-  { word: "about", clean: "about", translation: "hakkında", ipa: "/əˈbaʊt/", partOfSpeech: "prep" },
-  { word: "the", clean: "the", translation: "belirli artikel", ipa: "/ðə/", partOfSpeech: "det" },
-  { word: "forgotten", clean: "forgotten", translation: "unutulmuş", ipa: "/fərˈɡɑː.tən/", partOfSpeech: "adj" },
-  { word: "realm.", clean: "realm", translation: "diyar, krallık", ipa: "/relm/", partOfSpeech: "noun", isNew: true },
+const INITIAL_VOCABULARY: VocabularyItem[] = [
+  {
+    id: "v-1",
+    cleanWord: "cinnamon",
+    text: "cinnamon",
+    translationTr: "tarçın",
+    ipa: "/ˈsɪn.ə.mən/",
+    partOfSpeech: "noun",
+    exampleSentence: "A sprinkle of cinnamon makes the coffee smell sweet.",
+    storyTitle: "The Whispering Library",
+    savedAt: new Date().toISOString(),
+    status: "learning",
+    reviewCount: 1,
+    easeFactor: 2.5,
+  },
+  {
+    id: "v-2",
+    cleanWord: "intricate",
+    text: "intricate",
+    translationTr: "karmaşık / ince işlenmiş",
+    ipa: "/ˈɪn.trə.kət/",
+    partOfSpeech: "adj",
+    exampleSentence: "The clock mechanism had an intricate arrangement of gears.",
+    storyTitle: "The Clockwork Forest",
+    savedAt: new Date().toISOString(),
+    status: "learning",
+    reviewCount: 2,
+    easeFactor: 2.5,
+  },
 ];
 
 export default function Home() {
-  const [selectedWord, setSelectedWord] = useState<WordData | null>(sampleStoryTokens[8]);
-  const [savedWords, setSavedWords] = useState<Set<string>>(new Set(["ancient"]));
+  const [currentView, setCurrentView] = useState<"feed" | "reader">("feed");
+  const [activeStory, setActiveStory] = useState<Story | null>(null);
 
-  const toggleSaveWord = (cleanWord: string) => {
-    setSavedWords((prev) => {
-      const next = new Set(prev);
-      if (next.has(cleanWord)) {
-        next.delete(cleanWord);
+  // User Profile state
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: "Öğrenici",
+    level: "A2",
+    levelNumber: 2,
+    dailyStreak: 5,
+    wordsLearned: 24,
+    storiesRead: 3,
+  });
+
+  // Saved Vocabulary list
+  const [vocabulary, setVocabulary] = useState<VocabularyItem[]>(INITIAL_VOCABULARY);
+
+  // Bookmarked Stories
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(["story-1"]));
+
+  // Feed Filters
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<CEFRLevel | "ALL">("ALL");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<StoryCategory | "ALL">("ALL");
+
+  // Modals
+  const [isVocabularyModalOpen, setIsVocabularyModalOpen] = useState<boolean>(false);
+  const [isLevelTestModalOpen, setIsLevelTestModalOpen] = useState<boolean>(false);
+
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+
+  const handleToggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add("dark");
       } else {
-        next.add(cleanWord);
+        document.documentElement.classList.remove("dark");
       }
       return next;
     });
   };
 
+  // Change User Level
+  const handleChangeLevel = (newLevel: CEFRLevel) => {
+    setUserProfile((prev) => ({
+      ...prev,
+      level: newLevel,
+      levelNumber: LEVEL_MAP[newLevel] || 2,
+    }));
+  };
+
+  // Bookmark Toggle
+  const handleToggleBookmark = (storyId: string) => {
+    setBookmarkedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(storyId)) {
+        next.delete(storyId);
+      } else {
+        next.add(storyId);
+      }
+      return next;
+    });
+  };
+
+  // Select Story to Read
+  const handleSelectStory = (story: Story) => {
+    setActiveStory(story);
+    setCurrentView("reader");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Word Save / Toggle from Reader
+  const handleToggleSaveWord = (token: WordToken) => {
+    setVocabulary((prev) => {
+      const existsIndex = prev.findIndex((item) => item.cleanWord.toLowerCase() === token.clean.toLowerCase());
+      if (existsIndex >= 0) {
+        // Remove
+        return prev.filter((_, idx) => idx !== existsIndex);
+      } else {
+        // Add
+        const newItem: VocabularyItem = {
+          id: `vocab-${Date.now()}`,
+          cleanWord: token.clean,
+          text: token.text,
+          translationTr: token.translationTr,
+          ipa: token.ipa,
+          partOfSpeech: token.partOfSpeech,
+          exampleSentence: token.exampleSentence,
+          storyTitle: activeStory?.title || "Okuma",
+          savedAt: new Date().toISOString(),
+          status: "learning",
+          reviewCount: 0,
+          easeFactor: 2.5,
+        };
+        return [newItem, ...prev];
+      }
+    });
+  };
+
+  // Complete Story Handler
+  const handleCompleteStory = () => {
+    setUserProfile((prev) => ({
+      ...prev,
+      storiesRead: prev.storiesRead + 1,
+    }));
+  };
+
+  // Vocabulary Status Update
+  const handleUpdateVocabStatus = (id: string, status: "learning" | "mastered") => {
+    setVocabulary((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, status } : item))
+    );
+  };
+
+  // Remove Word from Vocabulary
+  const handleRemoveVocabWord = (id: string) => {
+    setVocabulary((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // Map of saved words for quick lookup in Reader
+  const savedWordsMap = new Map<string, boolean>();
+  vocabulary.forEach((v) => savedWordsMap.set(v.cleanWord.toLowerCase(), true));
+
+  // Filtered stories for the feed
+  const filteredStories = MOCK_STORIES.filter((story) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      story.titleTr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      story.summary.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesLevel = selectedLevelFilter === "ALL" || story.level === selectedLevelFilter;
+
+    const matchesCategory = selectedCategoryFilter === "ALL" || story.category === selectedCategoryFilter;
+
+    return matchesSearch && matchesLevel && matchesCategory;
+  });
+
   return (
-    <div className="flex-1 flex flex-col justify-between">
-      {/* Header */}
-      <header className="border-b border-[#E8E2D6] dark:border-[#2A2B32] bg-[#FDFBF7]/80 dark:bg-[#121316]/80 backdrop-blur-sm sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold tracking-tight text-[#2A2723] dark:text-[#E6E4DF]">
-              📚 GoLing<span className="text-[#2D6A4F] dark:text-[#52B788]">read</span>
-            </span>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 text-xs font-medium rounded-full bg-[#E8F5E9] dark:bg-[#143820] text-[#1B5E20] dark:text-[#81C784] border border-[#C8E6C9] dark:border-[#1E4D2B]">
-              %95 Comprehensible Input
-            </span>
-          </div>
+    <div className="min-h-screen flex flex-col bg-[#FDFBF7] dark:bg-[#121316] text-[#2A2723] dark:text-[#E6E4DF] transition-colors duration-200">
+      {/* Top Navigation */}
+      <Navbar
+        currentView={currentView}
+        onNavigateHome={() => setCurrentView("feed")}
+        onOpenVocabulary={() => setIsVocabularyModalOpen(true)}
+        onOpenLevelTest={() => setIsLevelTestModalOpen(true)}
+        savedWordsCount={vocabulary.length}
+        userProfile={userProfile}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={handleToggleDarkMode}
+      />
 
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-[#6E675F] dark:text-[#9A9790]">
-              Stephen Krashen Metodolojisi
-            </span>
-          </div>
-        </div>
-      </header>
+      {/* Main Content Area */}
+      {currentView === "feed" ? (
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
+          {/* Krashen 95% Hero & Level Calibrator */}
+          <HeroSection
+            userProfile={userProfile}
+            onChangeLevel={handleChangeLevel}
+            onOpenLevelTest={() => setIsLevelTestModalOpen(true)}
+          />
 
-      {/* Main Reading Preview Area */}
-      <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-10 flex-1">
-        {/* Intro Card */}
-        <div className="mb-8 p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#1B1C20] border border-[#E8E2D6] dark:border-[#2A2B32] shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#2A2723] dark:text-[#E6E4DF]">
-              Doğal Dil Edinimi ile İngilizce Okuma Deneyimi
-            </h1>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-[#E8F5E9] dark:bg-[#143820] text-[#1B5E20] dark:text-[#81C784] border border-[#A5D6A7] dark:border-[#2E7D32]">
-                <span className="w-2 h-2 rounded-full bg-[#2E7D32] dark:bg-[#81C784]" />
-                %96 Anlaşılabilirlik (Optimal)
-              </span>
+          {/* Filter Bar (Search, Level, Category) */}
+          <FilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedLevel={selectedLevelFilter}
+            onSelectLevel={setSelectedLevelFilter}
+            selectedCategory={selectedCategoryFilter}
+            onSelectCategory={setSelectedCategoryFilter}
+            totalStoriesCount={filteredStories.length}
+          />
+
+          {/* Story Cards Grid */}
+          {filteredStories.length === 0 ? (
+            <div className="text-center py-20 bg-white dark:bg-[#1B1C20] rounded-3xl border border-[#E8E2D6] dark:border-[#2A2B32]">
+              <span className="text-4xl block mb-2">🔍</span>
+              <h3 className="text-lg font-bold text-[#2A2723] dark:text-[#E6E4DF]">
+                Uygun hikaye bulunamadı
+              </h3>
+              <p className="text-xs text-[#6E675F] dark:text-[#9A9790] mt-1">
+                Lütfen arama teriminizi veya filtre tercihlerinizi değiştirin.
+              </p>
             </div>
-          </div>
-          <p className="text-sm sm:text-base text-[#6E675F] dark:text-[#9A9790] leading-relaxed">
-            Metindeki kelimelerin üzerine tıklayarak anlık bağlamsal Türkçe çevirisini, okunuşunu görebilir ve kelime defterinize ekleyebilirsiniz.
-          </p>
-        </div>
-
-        {/* Reading Article Container */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Reader Area (2 cols) */}
-          <div className="lg:col-span-2 p-6 sm:p-8 rounded-2xl bg-[#FFFFFF] dark:bg-[#1B1C20] border border-[#E8E2D6] dark:border-[#2A2B32] shadow-xs">
-            <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#E8E2D6]/60 dark:border-[#2A2B32]">
-              <span className="text-xs uppercase tracking-wider font-semibold text-[#6E675F] dark:text-[#9A9790]">
-                Bölüm 1: The Library of Shadows
-              </span>
-              <span className="text-xs text-[#6E675F] dark:text-[#9A9790]">
-                B1 Seviyesi • 3 Yeni Kelime
-              </span>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredStories.map((story) => (
+                <StoryCard
+                  key={story.id}
+                  story={story}
+                  userProfile={userProfile}
+                  isBookmarked={bookmarkedIds.has(story.id)}
+                  onToggleBookmark={handleToggleBookmark}
+                  onSelectStory={handleSelectStory}
+                />
+              ))}
             </div>
-
-            {/* Interactive Story Text */}
-            <div className="font-story text-xl sm:text-2xl leading-[2.1] text-[#2A2723] dark:text-[#E6E4DF] flex flex-wrap gap-x-2 gap-y-1">
-              {sampleStoryTokens.map((token, index) => {
-                const isSelected = selectedWord?.clean === token.clean;
-                const isSaved = savedWords.has(token.clean);
-
-                return (
-                  <button
-                    key={`${token.clean}-${index}`}
-                    type="button"
-                    onClick={() => setSelectedWord(token)}
-                    className={`transition-all rounded-md px-1 py-0.5 inline-block text-left cursor-pointer ${
-                      isSelected
-                        ? "bg-[#2D6A4F] text-white ring-2 ring-[#2D6A4F] dark:bg-[#52B788] dark:text-[#121316] dark:ring-[#52B788]"
-                        : token.isNew
-                        ? "bg-[#FFF8E1] text-[#795548] dark:bg-[#3E3211] dark:text-[#FFE082] underline decoration-dotted decoration-[#FFA000]"
-                        : isSaved
-                        ? "bg-[#E8F5E9] text-[#1B5E20] dark:bg-[#143820] dark:text-[#81C784]"
-                        : "hover:bg-[#F0EBE1] dark:hover:bg-[#2A2B32]"
-                    }`}
-                  >
-                    {token.word}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Word Inspector Sidebar (1 col) */}
-          <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#1B1C20] border border-[#E8E2D6] dark:border-[#2A2B32] shadow-xs flex flex-col justify-between">
-            {selectedWord ? (
-              <div className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-xs uppercase font-bold tracking-wider text-[#6E675F] dark:text-[#9A9790]">
-                      Seçilen Kelime
-                    </span>
-                    <h2 className="text-2xl font-bold text-[#2A2723] dark:text-[#E6E4DF]">
-                      {selectedWord.clean}
-                    </h2>
-                    <span className="text-xs text-[#6E675F] dark:text-[#9A9790] font-mono">
-                      {selectedWord.ipa} • {selectedWord.partOfSpeech}
-                    </span>
-                  </div>
-                  {selectedWord.isNew && (
-                    <span className="px-2 py-0.5 text-xs font-semibold rounded bg-[#FFF8E1] text-[#F57F17] dark:bg-[#3E3211] dark:text-[#FFD54F]">
-                      Yeni
-                    </span>
-                  )}
-                </div>
-
-                <div className="pt-3 border-t border-[#E8E2D6] dark:border-[#2A2B32]">
-                  <span className="text-xs text-[#6E675F] dark:text-[#9A9790] block mb-1">
-                    Bağlamsal Türkçe Karşılığı:
-                  </span>
-                  <p className="text-base font-semibold text-[#2D6A4F] dark:text-[#52B788]">
-                    {selectedWord.translation}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => toggleSaveWord(selectedWord.clean)}
-                  className={`w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-colors cursor-pointer flex items-center justify-center gap-2 ${
-                    savedWords.has(selectedWord.clean)
-                      ? "bg-[#E8F5E9] text-[#1B5E20] border border-[#A5D6A7] dark:bg-[#143820] dark:text-[#81C784] dark:border-[#2E7D32]"
-                      : "bg-[#2D6A4F] text-white hover:bg-[#245640] dark:bg-[#52B788] dark:text-[#121316] dark:hover:bg-[#40966E]"
-                  }`}
-                >
-                  {savedWords.has(selectedWord.clean)
-                    ? "✓ Kelime Defterine Eklendi"
-                    : "+ Kelime Defterine Ekle"}
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-[#6E675F] dark:text-[#9A9790] text-sm">
-                Kelime detayını ve çevirisini görmek için metindeki bir kelimeye tıklayın.
-              </div>
-            )}
-
-            {/* Krashen Badge Legend */}
-            <div className="pt-6 mt-6 border-t border-[#E8E2D6] dark:border-[#2A2B32] space-y-2">
-              <span className="text-xs font-semibold text-[#6E675F] dark:text-[#9A9790] block uppercase tracking-wider">
-                Seviye Rozetleri
-              </span>
-              <div className="flex flex-col gap-1.5 text-xs text-[#6E675F] dark:text-[#9A9790]">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#2E7D32]" />
-                  <span><strong>%95+ Yeşil:</strong> Optimal Akıcı Okuma</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#F57F17]" />
-                  <span><strong>%85 - %94 Sarı:</strong> Geliştirici Seviye</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C62828]" />
-                  <span><strong>&lt;%85 Kırmızı:</strong> Zorlayıcı</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+          )}
+        </main>
+      ) : (
+        activeStory && (
+          <ReaderCanvas
+            story={activeStory}
+            onBackToFeed={() => setCurrentView("feed")}
+            savedWordsMap={savedWordsMap}
+            onToggleSaveWord={handleToggleSaveWord}
+            onCompleteStory={handleCompleteStory}
+          />
+        )
+      )}
 
       {/* Footer */}
-      <footer className="border-t border-[#E8E2D6] dark:border-[#2A2B32] py-6 text-center text-xs text-[#6E675F] dark:text-[#9A9790]">
-        GoLingread • Stephen Krashen %95 Comprehensible Input Reading Engine
-      </footer>
+      <Footer />
+
+      {/* Vocabulary Review & Flashcard Modal */}
+      <FlashcardModal
+        isOpen={isVocabularyModalOpen}
+        onClose={() => setIsVocabularyModalOpen(false)}
+        vocabulary={vocabulary}
+        onUpdateStatus={handleUpdateVocabStatus}
+        onRemoveWord={handleRemoveVocabWord}
+      />
+
+      {/* Level Diagnostic Test Modal */}
+      <LevelTestModal
+        isOpen={isLevelTestModalOpen}
+        onClose={() => setIsLevelTestModalOpen(false)}
+        onApplyLevel={handleChangeLevel}
+      />
     </div>
   );
 }
