@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
@@ -8,15 +8,24 @@ import { useAppContext } from "@/context/AppContext";
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const {
+    user,
     userProfile,
     vocabulary,
     isDarkMode,
     toggleDarkMode,
     openLevelTestModal,
+    openAuthModal,
+    signOut,
   } = useAppContext();
+
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
 
   const isHome = pathname === "/";
   const isVocabulary = pathname === "/vocabulary";
+
+  const userInitial = (userProfile.name || userProfile.email || "U")
+    .charAt(0)
+    .toUpperCase();
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-[#E5E7EB] dark:border-[#2E2E2E] bg-[#FDFBF7]/90 dark:bg-[#121212]/90 backdrop-blur-md transition-colors duration-200">
@@ -88,7 +97,7 @@ export const Navbar: React.FC = () => {
           </button>
         </nav>
 
-        {/* Right: Stats, User Level & Theme Toggle */}
+        {/* Right: User Status, Streak & Actions */}
         <div className="flex items-center gap-2.5 sm:gap-3">
           {/* Daily Streak */}
           <div
@@ -137,6 +146,100 @@ export const Navbar: React.FC = () => {
               </svg>
             )}
           </button>
+
+          {/* Auth Action: Sign In Button or User Dropdown */}
+          {!user ? (
+            <button
+              type="button"
+              onClick={openAuthModal}
+              className="py-1.5 px-3 sm:px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 text-white font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                />
+              </svg>
+              <span>Sign In</span>
+            </button>
+          ) : (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white font-bold text-xs flex items-center justify-center shadow-xs cursor-pointer hover:scale-105 transition-transform overflow-hidden"
+              >
+                {userProfile.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={userProfile.avatarUrl}
+                    alt={userProfile.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{userInitial}</span>
+                )}
+              </button>
+
+              {/* User Dropdown */}
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] shadow-xl p-3 z-40 animate-in fade-in duration-150">
+                  <div className="px-3 py-2 border-b border-[#E5E7EB] dark:border-[#2E2E2E] mb-2">
+                    <p className="text-xs font-bold text-[#1F2937] dark:text-[#E5E7EB] truncate">
+                      {userProfile.name}
+                    </p>
+                    <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] truncate">
+                      {userProfile.email || user.email}
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/vocabulary"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="w-full px-3 py-2 text-xs font-medium text-[#1F2937] dark:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#252528] rounded-xl flex items-center gap-2 transition-colors"
+                  >
+                    <span>✨</span>
+                    <span>My Vocabulary ({vocabulary.length})</span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      openLevelTestModal();
+                    }}
+                    className="w-full px-3 py-2 text-xs font-medium text-[#1F2937] dark:text-[#E5E7EB] hover:bg-[#F3F4F6] dark:hover:bg-[#252528] rounded-xl flex items-center gap-2 transition-colors cursor-pointer text-left"
+                  >
+                    <span>🎯</span>
+                    <span>Level Calibration ({userProfile.level})</span>
+                  </button>
+
+                  <div className="pt-2 mt-2 border-t border-[#E5E7EB] dark:border-[#2E2E2E]">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsUserMenuOpen(false);
+                        await signOut();
+                      }}
+                      className="w-full px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl flex items-center gap-2 transition-colors cursor-pointer text-left"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        />
+                      </svg>
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

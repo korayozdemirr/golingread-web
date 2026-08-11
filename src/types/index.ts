@@ -65,7 +65,10 @@ export interface VocabularyItem {
 }
 
 export interface UserProfile {
+  id?: string;
   name: string;
+  email?: string;
+  avatarUrl?: string;
   level: CEFRLevel;
   levelNumber: number; // 1 to 5
   dailyStreak: number;

@@ -1,7 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
+import { User, Session, AuthError } from "@supabase/supabase-js";
 import { UserProfile, VocabularyItem, CEFRLevel, WordToken } from "@/types";
+import { supabase } from "@/lib/supabase";
 
 const LEVEL_MAP: Record<CEFRLevel, number> = {
   A1: 1,
@@ -67,16 +69,35 @@ const INITIAL_VOCABULARY: VocabularyItem[] = [
 ];
 
 interface AppContextType {
+  // Auth State
+  user: User | null;
+  session: Session | null;
+  isLoadingAuth: boolean;
+  isAuthModalOpen: boolean;
+  openAuthModal: () => void;
+  closeAuthModal: () => void;
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
+  signInWithEmail: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUpWithEmail: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null; user: User | null }>;
+  signOut: () => Promise<void>;
+
+  // User Profile
   userProfile: UserProfile;
   changeLevel: (newLevel: CEFRLevel) => void;
   incrementStoriesRead: () => void;
+
+  // Vocabulary
   vocabulary: VocabularyItem[];
   savedWordsMap: Map<string, boolean>;
   toggleSaveWord: (token: WordToken, storyTitle?: string) => void;
   updateVocabStatus: (id: string, status: "learning" | "mastered") => void;
   removeVocabWord: (id: string) => void;
+
+  // Bookmarks
   bookmarkedIds: Set<string>;
   toggleBookmark: (storyId: string) => void;
+
+  // Theme & Level Test Modals
   isDarkMode: boolean;
   toggleDarkMode: () => void;
   isLevelTestModalOpen: boolean;
@@ -142,6 +163,13 @@ const getInitialTheme = (): boolean => {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  // App Data State (Hybrid Local / Cloud)
   const [userProfile, setUserProfile] = useState<UserProfile>(getInitialProfile);
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>(getInitialVocabulary);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(getInitialBookmarks);
@@ -157,8 +185,215 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [isDarkMode]);
 
-  // Persist user profile changes
-  const changeLevel = (newLevel: CEFRLevel) => {
+  // Cloud Database Sync: Load user profile & vocabulary from Supabase
+  const loadUserDataFromSupabase = useCallback(async (activeUser: User) => {
+    try {
+      // 1. Fetch or create Profile in Supabase
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", activeUser.id)
+        .maybeSingle();
+
+      if (profileRow) {
+        const level = (profileRow.level || profileRow.cefr_level || "A2") as CEFRLevel;
+        const profile: UserProfile = {
+          id: activeUser.id,
+          name:
+            profileRow.name ||
+            profileRow.full_name ||
+            activeUser.user_metadata?.full_name ||
+            activeUser.email?.split("@")[0] ||
+            "Learner",
+          email: activeUser.email,
+          avatarUrl:
+            profileRow.avatar_url ||
+            activeUser.user_metadata?.avatar_url ||
+            activeUser.user_metadata?.picture,
+          level,
+          levelNumber: LEVEL_MAP[level] || 2,
+          dailyStreak: profileRow.daily_streak ?? 5,
+          wordsLearned: profileRow.words_learned ?? 0,
+          storiesRead: profileRow.stories_read ?? 0,
+        };
+        setUserProfile(profile);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEYS.PROFILE, JSON.stringify(profile));
+        } catch {
+          // ignore
+        }
+      } else {
+        // Auto-create initial profile row for new user
+        const initialProfile: UserProfile = {
+          id: activeUser.id,
+          name:
+            activeUser.user_metadata?.full_name ||
+            activeUser.email?.split("@")[0] ||
+            "Learner",
+          email: activeUser.email,
+          avatarUrl:
+            activeUser.user_metadata?.avatar_url ||
+            activeUser.user_metadata?.picture,
+          level: "A2",
+          levelNumber: 2,
+          dailyStreak: 5,
+          wordsLearned: 24,
+          storiesRead: 3,
+        };
+        await supabase.from("profiles").insert({
+          id: activeUser.id,
+          name: initialProfile.name,
+          level: initialProfile.level,
+          level_number: initialProfile.levelNumber,
+          daily_streak: initialProfile.dailyStreak,
+          words_learned: initialProfile.wordsLearned,
+          stories_read: initialProfile.storiesRead,
+          avatar_url: initialProfile.avatarUrl || null,
+        });
+        setUserProfile(initialProfile);
+      }
+
+      // 2. Fetch User Vocabulary from Supabase
+      const { data: vocabRows } = await supabase
+        .from("user_vocabulary")
+        .select("*")
+        .eq("user_id", activeUser.id)
+        .order("saved_at", { ascending: false });
+
+      if (vocabRows && vocabRows.length > 0) {
+        const loadedVocab: VocabularyItem[] = vocabRows.map((row) => ({
+          id: String(row.id),
+          cleanWord: row.clean_word || row.cleanWord || "",
+          text: row.text || row.clean_word || "",
+          translationTr: row.translation_tr || row.translationTr || "",
+          ipa: row.ipa || "",
+          partOfSpeech: row.part_of_speech || row.partOfSpeech || "noun",
+          exampleSentence: row.example_sentence || row.exampleSentence,
+          storyTitle: row.story_title || row.storyTitle || "Reading",
+          savedAt: row.saved_at || row.savedAt || new Date().toISOString(),
+          status: (row.status === "mastered" ? "mastered" : "learning"),
+          reviewCount: row.review_count || row.reviewCount || 0,
+          easeFactor: row.ease_factor || row.easeFactor || 2.5,
+        }));
+
+        setVocabulary(loadedVocab);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEYS.VOCABULARY, JSON.stringify(loadedVocab));
+        } catch {
+          // ignore
+        }
+      }
+    } catch {
+      // Supabase access failsafe
+    }
+  }, []);
+
+  // Initialize Supabase Auth Session listener
+  useEffect(() => {
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setIsLoadingAuth(false);
+      if (currentSession?.user) {
+        loadUserDataFromSupabase(currentSession.user);
+      }
+    });
+
+    // 2. Subscribe to auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      setIsLoadingAuth(false);
+
+      if (newSession?.user) {
+        await loadUserDataFromSupabase(newSession.user);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [loadUserDataFromSupabase]);
+
+  // Auth Operations
+  const signInWithGoogle = useCallback(async (): Promise<{ error: AuthError | null }> => {
+    try {
+      const redirectTo = typeof window !== "undefined" ? window.location.origin : undefined;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+        },
+      });
+      return { error };
+    } catch (err: unknown) {
+      return { error: err as AuthError };
+    }
+  }, []);
+
+  const signInWithEmail = useCallback(async (email: string, password: string): Promise<{ error: AuthError | null }> => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (!error) {
+        setIsAuthModalOpen(false);
+      }
+      return { error };
+    } catch (err: unknown) {
+      return { error: err as AuthError };
+    }
+  }, []);
+
+  const signUpWithEmail = useCallback(async (
+    email: string,
+    password: string,
+    name?: string
+  ): Promise<{ error: AuthError | null; user: User | null }> => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name || "Learner",
+          },
+        },
+      });
+      if (!error && data.user) {
+        setIsAuthModalOpen(false);
+      }
+      return { error, user: data.user };
+    } catch (err: unknown) {
+      return { error: err as AuthError, user: null };
+    }
+  }, []);
+
+  const signOut = useCallback(async (): Promise<void> => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      // Reset to guest defaults
+      setUserProfile(DEFAULT_USER_PROFILE);
+      setVocabulary(INITIAL_VOCABULARY);
+      try {
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.PROFILE);
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.VOCABULARY);
+      } catch {
+        // ignore
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Change Level (Hybrid Local + Supabase)
+  const changeLevel = useCallback((newLevel: CEFRLevel) => {
     setUserProfile((prev) => {
       const updated: UserProfile = {
         ...prev,
@@ -174,13 +409,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return updated;
     });
-  };
 
-  const incrementStoriesRead = () => {
+    // Cloud sync if user logged in
+    if (user?.id) {
+      supabase
+        .from("profiles")
+        .update({
+          level: newLevel,
+          level_number: LEVEL_MAP[newLevel] || 2,
+        })
+        .eq("id", user.id)
+        .then();
+    }
+  }, [user]);
+
+  // Increment Stories Read (Hybrid Local + Supabase)
+  const incrementStoriesRead = useCallback(() => {
+    let nextCount = 1;
     setUserProfile((prev) => {
+      nextCount = prev.storiesRead + 1;
       const updated = {
         ...prev,
-        storiesRead: prev.storiesRead + 1,
+        storiesRead: nextCount,
       };
       if (typeof window !== "undefined") {
         try {
@@ -191,19 +441,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return updated;
     });
-  };
 
-  // Persist vocabulary updates
-  const toggleSaveWord = (token: WordToken, storyTitle: string = "Reading") => {
+    // Cloud sync if user logged in
+    if (user?.id) {
+      supabase
+        .from("profiles")
+        .update({
+          stories_read: nextCount,
+        })
+        .eq("id", user.id)
+        .then();
+    }
+  }, [user]);
+
+  // Toggle Save Word (Hybrid Local + Supabase)
+  const toggleSaveWord = useCallback((token: WordToken, storyTitle: string = "Reading") => {
+    let isRemoving = false;
+    let addedItem: VocabularyItem | null = null;
+
     setVocabulary((prev) => {
       const existsIndex = prev.findIndex(
         (item) => item.cleanWord.toLowerCase() === token.clean.toLowerCase()
       );
       let updated: VocabularyItem[];
       if (existsIndex >= 0) {
+        isRemoving = true;
         updated = prev.filter((_, idx) => idx !== existsIndex);
       } else {
-        const newItem: VocabularyItem = {
+        addedItem = {
           id: `vocab-${Date.now()}`,
           cleanWord: token.clean,
           text: token.text,
@@ -217,7 +482,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           reviewCount: 0,
           easeFactor: 2.5,
         };
-        updated = [newItem, ...prev];
+        updated = [addedItem, ...prev];
       }
 
       if (typeof window !== "undefined") {
@@ -229,9 +494,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return updated;
     });
-  };
 
-  const updateVocabStatus = (id: string, status: "learning" | "mastered") => {
+    // Cloud sync if user logged in
+    if (user?.id) {
+      if (isRemoving) {
+        supabase
+          .from("user_vocabulary")
+          .delete()
+          .eq("user_id", user.id)
+          .ilike("clean_word", token.clean)
+          .then();
+      } else if (addedItem) {
+        supabase
+          .from("user_vocabulary")
+          .upsert({
+            id: (addedItem as VocabularyItem).id,
+            user_id: user.id,
+            clean_word: token.clean,
+            text: token.text,
+            translation_tr: token.translationTr,
+            ipa: token.ipa,
+            part_of_speech: token.partOfSpeech,
+            example_sentence: token.exampleSentence || null,
+            story_title: storyTitle,
+            status: "learning",
+            review_count: 0,
+            ease_factor: 2.5,
+            saved_at: new Date().toISOString(),
+          })
+          .then();
+      }
+    }
+  }, [user]);
+
+  // Update Vocab Status (Hybrid Local + Supabase)
+  const updateVocabStatus = useCallback((id: string, status: "learning" | "mastered") => {
     setVocabulary((prev) => {
       const updated = prev.map((item) => (item.id === id ? { ...item, status } : item));
       if (typeof window !== "undefined") {
@@ -243,9 +540,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return updated;
     });
-  };
 
-  const removeVocabWord = (id: string) => {
+    // Cloud sync if user logged in
+    if (user?.id) {
+      supabase
+        .from("user_vocabulary")
+        .update({ status })
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .then();
+    }
+  }, [user]);
+
+  // Remove Word (Hybrid Local + Supabase)
+  const removeVocabWord = useCallback((id: string) => {
     setVocabulary((prev) => {
       const updated = prev.filter((item) => item.id !== id);
       if (typeof window !== "undefined") {
@@ -257,10 +565,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return updated;
     });
-  };
 
-  // Persist bookmark updates
-  const toggleBookmark = (storyId: string) => {
+    // Cloud sync if user logged in
+    if (user?.id) {
+      supabase
+        .from("user_vocabulary")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .then();
+    }
+  }, [user]);
+
+  // Toggle Bookmark
+  const toggleBookmark = useCallback((storyId: string) => {
     setBookmarkedIds((prev) => {
       const updated = new Set(prev);
       if (updated.has(storyId)) {
@@ -277,10 +595,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return updated;
     });
-  };
+  }, []);
 
-  // Toggle Dark mode
-  const toggleDarkMode = () => {
+  // Toggle Dark Mode
+  const toggleDarkMode = useCallback(() => {
     setIsDarkMode((prev) => {
       const next = !prev;
       if (typeof window !== "undefined") {
@@ -292,7 +610,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return next;
     });
-  };
+  }, []);
+
+  const openAuthModal = useCallback(() => setIsAuthModalOpen(true), []);
+  const closeAuthModal = useCallback(() => setIsAuthModalOpen(false), []);
+  const openLevelTestModal = useCallback(() => setIsLevelTestModalOpen(true), []);
+  const closeLevelTestModal = useCallback(() => setIsLevelTestModalOpen(false), []);
 
   // Map of saved words for quick lookup in Reader
   const savedWordsMap = useMemo(() => {
@@ -303,6 +626,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const value = useMemo(
     () => ({
+      user,
+      session,
+      isLoadingAuth,
+      isAuthModalOpen,
+      openAuthModal,
+      closeAuthModal,
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      signOut,
       userProfile,
       changeLevel,
       incrementStoriesRead,
@@ -316,16 +649,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isDarkMode,
       toggleDarkMode,
       isLevelTestModalOpen,
-      openLevelTestModal: () => setIsLevelTestModalOpen(true),
-      closeLevelTestModal: () => setIsLevelTestModalOpen(false),
+      openLevelTestModal,
+      closeLevelTestModal,
     }),
     [
+      user,
+      session,
+      isLoadingAuth,
+      isAuthModalOpen,
+      openAuthModal,
+      closeAuthModal,
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      signOut,
       userProfile,
+      changeLevel,
+      incrementStoriesRead,
       vocabulary,
       savedWordsMap,
+      toggleSaveWord,
+      updateVocabStatus,
+      removeVocabWord,
       bookmarkedIds,
+      toggleBookmark,
       isDarkMode,
+      toggleDarkMode,
       isLevelTestModalOpen,
+      openLevelTestModal,
+      closeLevelTestModal,
     ]
   );
 

@@ -1,6 +1,6 @@
 # 📚 GoLingread - Project Context & Architecture Memory
 
-> **Version:** 0.2.0  
+> **Version:** 0.3.0  
 > **Last Updated:** August 2026  
 > **Repository:** `golingread-web`
 
@@ -18,12 +18,15 @@ The core thesis is that natural language acquisition happens effortlessly when l
 
 - **Framework:** Next.js (App Router, Turbopack, `src/` directory structure)
 - **Language:** TypeScript
+- **Backend & Auth:** Supabase (`@supabase/supabase-js`, `@supabase/ssr`) with Google OAuth, Email/Password authentication, and PostgreSQL RLS tables (`profiles`, `user_vocabulary`).
 - **Styling:** Tailwind CSS v4 + Custom Theme Variables (`globals.css`)
 - **Typography:** 
   - `Lora` (Google Fonts - Serif for story reading text, optimal line-height `1.8`, tracking `0.01em`)
   - `Inter` (Google Fonts - Sans-serif for all UI controls, navigation, badges, and modals)
 - **Audio:** Web Speech API (`SpeechSynthesis`) for native, low-latency Text-to-Speech (TTS) audio with variable playback rates (0.8x, 1.0x, 1.2x)
-- **State & Data:** Centralized React Context (`AppContext.tsx`) with `localStorage` persistence across routes, tokenized mock stories (`src/data/mockStories.ts`), spaced-repetition vocabulary tracking, and CEFR level calibration.
+- **State & Data:** Hybrid Local & Cloud State (`AppContext.tsx`):
+  - *Guest Mode:* Seamless `localStorage` persistence (no forced login, optimal for SEO and Google AdSense).
+  - *Authenticated Mode:* Real-time cloud sync with Supabase tables (`profiles` for CEFR level/streak/stories read, `user_vocabulary` for saved deck with SRS status).
 
 ### 🌐 App Router Route Structure (SEO & AdSense Ready)
 - `/`: **Home & Story Catalog** — Krashen 95% Input Hero Section, CEFR level calibrator, search and filter bar, and story card grid.
@@ -53,30 +56,34 @@ The core thesis is that natural language acquisition happens effortlessly when l
 ## 📱 4. Key Components & Implementation
 
 1. **Global App State Provider ([AppContext.tsx](file:///Users/korayozdemir/golingread-web/src/context/AppContext.tsx)):**
-   - Centralizes user profile, CEFR level calibration, saved vocabulary deck, bookmark list, dark mode, and level test modal state with `localStorage` persistence across all pages.
-2. **Header & Navigation ([Navbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/layout/Navbar.tsx)):**
-   - Brand logo with reading icon, Next.js `<Link>` navigation ("Stories", "My Vocabulary", "Level Test"), daily streak pill (🔥 5 Days), active CEFR level pill, and theme mode toggle.
-3. **Story Feed & Dynamic Match Engine ([HeroSection.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/HeroSection.tsx), [FilterBar.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/FilterBar.tsx), [StoryCard.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/StoryCard.tsx)):**
+   - Centralizes user profile, CEFR level calibration, saved vocabulary deck, bookmark list, dark mode, auth session, and level test modal state with hybrid local/cloud persistence.
+2. **Supabase Client ([supabase.ts](file:///Users/korayozdemir/golingread-web/src/lib/supabase.ts)):**
+   - Client helper configured with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. **Authentication Modal ([AuthModal.tsx](file:///Users/korayozdemir/golingread-web/src/components/auth/AuthModal.tsx)):**
+   - Google OAuth and Email/Password Sign-In/Sign-Up modal with validation, error messages, and account creation feedback.
+4. **Header & Navigation ([Navbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/layout/Navbar.tsx)):**
+   - Brand logo with reading icon, Next.js `<Link>` navigation ("Stories", "My Vocabulary", "Level Test"), daily streak pill (🔥 5 Days), active CEFR level pill, user profile avatar with dropdown, and theme mode toggle.
+5. **Story Feed & Dynamic Match Engine ([HeroSection.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/HeroSection.tsx), [FilterBar.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/FilterBar.tsx), [StoryCard.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/StoryCard.tsx)):**
    - Real-time CEFR level selector: Changing the learner's level instantly recalculates comprehension match percentages for all stories across the catalog.
    - Search bar and filters for CEFR levels (All, A1..C1) and genres (Mystery, Sci-Fi, Daily Life, History, Adventure, Philosophy).
    - `StoryCard` uses Next.js `<Link>` to navigate to `/story/[slug]`.
-4. **Dynamic Story Reader ([page.tsx](file:///Users/korayozdemir/golingread-web/src/app/story/%5Bslug%5D/page.tsx), [StoryReaderView.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryReaderView.tsx)):**
+6. **Dynamic Story Reader ([page.tsx](file:///Users/korayozdemir/golingread-web/src/app/story/%5Bslug%5D/page.tsx), [StoryReaderView.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryReaderView.tsx)):**
    - Server-side metadata generator for crawlability and social sharing.
    - Breadcrumb navigation back to Stories (`/`).
-5. **Core Reader Canvas ([ReaderCanvas.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderCanvas.tsx)):**
+7. **Core Reader Canvas ([ReaderCanvas.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderCanvas.tsx)):**
    - Centered `max-w-[68ch]` reading container with Lora serif typography.
    - Zero-layout-shift tokenized clickable words.
    - Expandable Turkish paragraph translations toggle on demand.
-6. **Reader Toolbar ([ReaderToolbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderToolbar.tsx)):**
+8. **Reader Toolbar ([ReaderToolbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderToolbar.tsx)):**
    - Full story TTS speech player with speed control (0.8x, 1.0x, 1.2x).
    - Font size adjuster (`15px` to `26px`), line-height adjuster (`tight`, `relaxed`, `loose`), and 4 paper themes switcher.
-7. **Zero-Layout-Shift Word Popover ([WordPopover.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/WordPopover.tsx)):**
+9. **Zero-Layout-Shift Word Popover ([WordPopover.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/WordPopover.tsx)):**
    - Contextual Turkish translation, phonetic IPA pronunciation, part-of-speech badge, single-word audio pronunciation, and "+ Save to My Vocabulary" toggle.
-8. **Standalone Vocabulary Hub ([page.tsx](file:///Users/korayozdemir/golingread-web/src/app/vocabulary/page.tsx)):**
-   - 3D flip card review session with spaced-repetition ratings (*Again*, *Good*, *Mastered*), statistics banner, search filter, and vocabulary management table.
-9. **Diagnostic Level Test ([LevelTestModal.tsx](file:///Users/korayozdemir/golingread-web/src/components/level-test/LevelTestModal.tsx)):**
-   - 5-question CEFR level assessment that calibrates the user profile and updates match scores across all views.
-10. **Comprehension Quiz & Sponsorship ([StoryQuiz.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryQuiz.tsx), [SponsorSidebar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/SponsorSidebar.tsx)):**
+10. **Standalone Vocabulary Hub ([page.tsx](file:///Users/korayozdemir/golingread-web/src/app/vocabulary/page.tsx)):**
+    - 3D flip card review session with spaced-repetition ratings (*Again*, *Good*, *Mastered*), statistics banner, search filter, and vocabulary management table.
+11. **Diagnostic Level Test ([LevelTestModal.tsx](file:///Users/korayozdemir/golingread-web/src/components/level-test/LevelTestModal.tsx)):**
+    - 5-question CEFR level assessment that calibrates the user profile and updates match scores across all views.
+12. **Comprehension Quiz & Sponsorship ([StoryQuiz.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryQuiz.tsx), [SponsorSidebar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/SponsorSidebar.tsx)):**
     - End-of-story comprehension checks and non-intrusive editorial premium sponsorship blocks.
 
 ---
@@ -95,3 +102,6 @@ The core thesis is that natural language acquisition happens effortlessly when l
 4. **Dynamic URL Routing & Page Separation for SEO/AdSense:**
    - *Problem:* Story reader and vocabulary deck were embedded in modals/state toggles on a single URL (`/`), preventing deep-linking, SEO indexing, and AdSense placement.
    - *Solution:* Separated into dedicated Next.js App Router routes (`/story/[slug]`, `/vocabulary`, `/`) with `generateMetadata`, `generateStaticParams`, and global `AppContext` state persistence.
+5. **Supabase Auth & Hybrid Database Cloud Sync:**
+   - *Problem:* Required cloud synchronization for authenticated learners across devices while allowing frictionless guest reading for SEO & Google AdSense.
+   - *Solution:* Connected Supabase browser client with Google OAuth & Email auth, syncing `profiles` and `user_vocabulary` tables for authenticated users while maintaining `localStorage` fallback for guests.
