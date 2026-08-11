@@ -48,12 +48,20 @@ export const AuthModal: React.FC = () => {
     if (mode === "signin") {
       const { error } = await signInWithEmail(email, password);
       if (error) {
-        setErrorMessage(error.message);
+        if (error.message.toLowerCase().includes("too many") || error.status === 429) {
+          setErrorMessage("Too many sign-in attempts. Please wait a moment or sign in with Google.");
+        } else {
+          setErrorMessage(error.message);
+        }
       }
     } else {
       const { error, user } = await signUpWithEmail(email, password, name);
       if (error) {
-        setErrorMessage(error.message);
+        if (error.message.toLowerCase().includes("too many") || error.message.toLowerCase().includes("rate limit") || error.status === 429) {
+          setErrorMessage("Email rate limit reached. Please wait a few minutes before trying again, or use Google Sign-In.");
+        } else {
+          setErrorMessage(error.message);
+        }
       } else if (user && !user.confirmed_at) {
         setSuccessMessage(
           "Account created! Please check your email inbox to confirm your account."

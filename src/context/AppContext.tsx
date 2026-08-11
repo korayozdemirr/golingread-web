@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { UserProfile, VocabularyItem, CEFRLevel, WordToken } from "@/types";
 import { supabase } from "@/lib/supabase";
@@ -176,6 +176,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialTheme);
   const [isLevelTestModalOpen, setIsLevelTestModalOpen] = useState<boolean>(false);
 
+  const lastLoadedUserIdRef = useRef<string | null>(null);
+
   // Synchronize document dark class on theme changes
   useEffect(() => {
     if (isDarkMode) {
@@ -189,13 +191,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadUserDataFromSupabase = useCallback(async (activeUser: User) => {
     try {
       // 1. Fetch or create Profile in Supabase
-      const { data: profileRow } = await supabase
+      const { data: profileRow, error: profileErr } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", activeUser.id)
         .maybeSingle();
 
-      if (profileRow) {
+      if (!profileErr && profileRow) {
         const level = (profileRow.level || profileRow.cefr_level || "A2") as CEFRLevel;
         const profile: UserProfile = {
           id: activeUser.id,
@@ -222,7 +224,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } catch {
           // ignore
         }
-      } else {
+      } else if (!profileErr) {
         // Auto-create initial profile row for new user
         const initialProfile: UserProfile = {
           id: activeUser.id,
@@ -254,13 +256,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // 2. Fetch User Vocabulary from Supabase
-      const { data: vocabRows } = await supabase
+      const { data: vocabRows, error: vocabErr } = await supabase
         .from("user_vocabulary")
         .select("*")
         .eq("user_id", activeUser.id)
         .order("saved_at", { ascending: false });
 
-      if (vocabRows && vocabRows.length > 0) {
+      if (!vocabErr && vocabRows && vocabRows.length > 0) {
         const loadedVocab: VocabularyItem[] = vocabRows.map((row) => ({
           id: String(row.id),
           cleanWord: row.clean_word || row.cleanWord || "",
@@ -288,32 +290,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Initialize Supabase Auth Session listener
+  // Initialize Supabase Auth Session listener with deduplication
   useEffect(() => {
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoadingAuth(false);
-      if (currentSession?.user) {
-        loadUserDataFromSupabase(currentSession.user);
-      }
-    });
+    let isMounted = true;
 
-    // 2. Subscribe to auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (!isMounted) return;
+
       setSession(newSession);
-      setUser(newSession?.user ?? null);
+      const currentUser = newSession?.user ?? null;
+      setUser(currentUser);
       setIsLoadingAuth(false);
 
-      if (newSession?.user) {
-        await loadUserDataFromSupabase(newSession.user);
+      if (currentUser) {
+        if (lastLoadedUserIdRef.current !== currentUser.id) {
+          lastLoadedUserIdRef.current = currentUser.id;
+          await loadUserDataFromSupabase(currentUser);
+        }
+      } else {
+        lastLoadedUserIdRef.current = null;
       }
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [loadUserDataFromSupabase]);
@@ -378,6 +380,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
+      lastLoadedUserIdRef.current = null;
       // Reset to guest defaults
       setUserProfile(DEFAULT_USER_PROFILE);
       setVocabulary(INITIAL_VOCABULARY);
