@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Story, CEFRLevel, StoryCategory, WordToken } from "@/types";
+import { isAdminEmail } from "@/lib/auth-admin";
 
 const LEVEL_VOCAB_MAP: Record<CEFRLevel, number> = {
   A1: 1,
@@ -159,7 +160,15 @@ function generateFallbackStory(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { topic, level = "A2", category = "Daily Life", wordCount = 180, apiKey } = body;
+    const { topic, level = "A2", category = "Daily Life", wordCount = 180, apiKey, userEmail } = body;
+
+    const requestEmail = req.headers.get("x-user-email") || userEmail;
+    if (!isAdminEmail(requestEmail)) {
+      return NextResponse.json(
+        { error: "Forbidden: Administrator authorization required." },
+        { status: 403 }
+      );
+    }
 
     if (!topic || typeof topic !== "string" || topic.trim().length === 0) {
       return NextResponse.json(

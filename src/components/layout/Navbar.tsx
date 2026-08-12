@@ -11,6 +11,7 @@ export const Navbar: React.FC = () => {
     user,
     userProfile,
     vocabulary,
+    isAdmin,
     isDarkMode,
     toggleDarkMode,
     openLevelTestModal,
@@ -204,14 +205,16 @@ export const Navbar: React.FC = () => {
                     <span>My Vocabulary ({vocabulary.length})</span>
                   </Link>
 
-                  <Link
-                    href="/admin/generate"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="w-full px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl flex items-center gap-2 transition-colors"
-                  >
-                    <span>⚡</span>
-                    <span>AI Story Studio</span>
-                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href="/admin/generate"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="w-full px-3 py-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl flex items-center gap-2 transition-colors"
+                    >
+                      <span>⚡</span>
+                      <span>AI Story Studio</span>
+                    </Link>
+                  )}
 
                   <button
                     type="button"

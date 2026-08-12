@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { UserProfile, VocabularyItem, CEFRLevel, WordToken } from "@/types";
 import { supabase } from "@/lib/supabase";
+import { isAdminEmail } from "@/lib/auth-admin";
 
 const LEVEL_MAP: Record<CEFRLevel, number> = {
   A1: 1,
@@ -73,6 +74,7 @@ interface AppContextType {
   user: User | null;
   session: Session | null;
   isLoadingAuth: boolean;
+  isAdmin: boolean;
   isAuthModalOpen: boolean;
   openAuthModal: () => void;
   closeAuthModal: () => void;
@@ -623,6 +625,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const openLevelTestModal = useCallback(() => setIsLevelTestModalOpen(true), []);
   const closeLevelTestModal = useCallback(() => setIsLevelTestModalOpen(false), []);
 
+  // Compute Admin Status based on verified email whitelist
+  const isAdmin = useMemo(() => {
+    return isAdminEmail(user?.email || userProfile.email);
+  }, [user?.email, userProfile.email]);
+
   // Map of saved words for quick lookup in Reader
   const savedWordsMap = useMemo(() => {
     const map = new Map<string, boolean>();
@@ -635,6 +642,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user,
       session,
       isLoadingAuth,
+      isAdmin,
       isAuthModalOpen,
       openAuthModal,
       closeAuthModal,
@@ -662,6 +670,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user,
       session,
       isLoadingAuth,
+      isAdmin,
       isAuthModalOpen,
       openAuthModal,
       closeAuthModal,

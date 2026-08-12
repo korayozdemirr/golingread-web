@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { publishStoryToSupabase } from "@/lib/stories";
 import { Story } from "@/types";
+import { isAdminEmail } from "@/lib/auth-admin";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { story } = body as { story: Story };
+    const { story, userEmail } = body as { story: Story; userEmail?: string };
+
+    const requestEmail = req.headers.get("x-user-email") || userEmail;
+    if (!isAdminEmail(requestEmail)) {
+      return NextResponse.json(
+        { error: "Forbidden: Administrator authorization required." },
+        { status: 403 }
+      );
+    }
 
     if (!story || !story.title || !story.slug || !story.paragraphs) {
       return NextResponse.json(

@@ -59,7 +59,14 @@ const CATEGORIES: StoryCategory[] = [
 ];
 
 export default function AdminGeneratePage() {
-  const { savedWordsMap, toggleSaveWord } = useAppContext();
+  const {
+    user,
+    isAdmin,
+    isLoadingAuth,
+    openAuthModal,
+    savedWordsMap,
+    toggleSaveWord,
+  } = useAppContext();
 
   // Form State
   const [topic, setTopic] = useState<string>("");
@@ -109,13 +116,17 @@ export default function AdminGeneratePage() {
 
       const res = await fetch("/api/admin/generate-story", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": user?.email || "",
+        },
         body: JSON.stringify({
           topic: topic.trim(),
           level,
           category,
           wordCount,
           apiKey: apiKey.trim() || undefined,
+          userEmail: user?.email,
         }),
       });
 
@@ -142,8 +153,14 @@ export default function AdminGeneratePage() {
     try {
       const res = await fetch("/api/admin/publish-story", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ story: generatedStory }),
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": user?.email || "",
+        },
+        body: JSON.stringify({
+          story: generatedStory,
+          userEmail: user?.email,
+        }),
       });
 
       const data = await res.json();
@@ -178,26 +195,76 @@ export default function AdminGeneratePage() {
 
       {/* Main Studio Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
-        {/* Breadcrumb & Admin Tag */}
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <nav className="flex items-center gap-2 text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF]">
-            <Link href="/" className="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400">
-              Home
-            </Link>
-            <span>/</span>
-            <span className="font-bold text-[#1F2937] dark:text-[#E5E7EB]">
-              AI Story Studio
-            </span>
-          </nav>
+        {/* Loading State */}
+        {isLoadingAuth ? (
+          <div className="py-24 text-center">
+            <div className="w-10 h-10 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF]">
+              Verifying administrative credentials...
+            </p>
+          </div>
+        ) : !isAdmin ? (
+          /* Access Denied Guard */
+          <div className="max-w-md mx-auto my-12 p-8 rounded-3xl bg-white dark:bg-[#1E1E1E] border border-rose-200 dark:border-rose-900/60 shadow-xl text-center">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-2xl mx-auto mb-4">
+              🔒
+            </div>
+            <h2 className="text-xl font-bold text-[#1F2937] dark:text-[#E5E7EB] mb-2">
+              Administrator Access Required
+            </h2>
+            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed mb-6">
+              The AI Story Studio is restricted to authorized administrator accounts.
+              {user ? (
+                <span className="block mt-2 font-mono text-[11px] bg-gray-100 dark:bg-gray-800 p-1.5 rounded">
+                  Logged in as: {user.email} (Not Authorized)
+                </span>
+              ) : (
+                <span className="block mt-1">
+                  Please sign in with an authorized admin account.
+                </span>
+              )}
+            </p>
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-            <span>⚡</span>
-            <span>Admin Story Engine</span>
-          </span>
-        </div>
+            <div className="space-y-2">
+              {!user ? (
+                <button
+                  type="button"
+                  onClick={openAuthModal}
+                  className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
+                >
+                  Sign In with Admin Account
+                </button>
+              ) : null}
+              <Link
+                href="/"
+                className="block w-full py-2.5 px-4 rounded-xl bg-[#F3F4F6] dark:bg-[#252528] text-[#1F2937] dark:text-[#E5E7EB] font-bold text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Return to Stories Feed
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Breadcrumb & Admin Tag */}
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <nav className="flex items-center gap-2 text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF]">
+                <Link href="/" className="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400">
+                  Home
+                </Link>
+                <span>/</span>
+                <span className="font-bold text-[#1F2937] dark:text-[#E5E7EB]">
+                  AI Story Studio
+                </span>
+              </nav>
 
-        {/* Studio Hero Banner */}
-        <div className="rounded-3xl bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] p-6 sm:p-8 mb-8 shadow-xs">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                <span>⚡</span>
+                <span>Admin Story Engine</span>
+              </span>
+            </div>
+
+            {/* Studio Hero Banner */}
+            <div className="rounded-3xl bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] p-6 sm:p-8 mb-8 shadow-xs">
           <div className="max-w-2xl">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] mb-2 font-serif">
               AI Story Generator & Publisher
@@ -565,6 +632,8 @@ export default function AdminGeneratePage() {
               </div>
             )}
           </div>
+        )}
+          </>
         )}
       </main>
 
