@@ -3,6 +3,7 @@ import { Story, CEFRLevel, StoryCategory, Paragraph, WordToken } from "@/types";
 import { isAdminEmail } from "@/lib/auth-admin";
 import { enrichStoryTokens, enrichWordToken } from "@/lib/story-enricher";
 import { cleanWordToken } from "@/lib/dictionary";
+import { getAvailableGeminiModels } from "@/lib/gemini";
 
 const LEVEL_VOCAB_MAP: Record<CEFRLevel, number> = {
   A1: 1,
@@ -285,7 +286,11 @@ export async function POST(req: NextRequest) {
 
     // If Gemini API Key is available, call Gemini API
     if (effectiveApiKey) {
-      const prompt = `You are an expert ESL/EFL graded reading author specialized in Stephen Krashen's 95% Comprehensible Input hypothesis ($i+1$).
+      const discovery = await getAvailableGeminiModels(effectiveApiKey);
+      if (!discovery.success || discovery.models.length === 0) {
+        geminiErrorLog = discovery.error || "No available Gemini models found for this API key.";
+      } else {
+        const prompt = `You are an expert ESL/EFL graded reading author specialized in Stephen Krashen's 95% Comprehensible Input hypothesis ($i+1$).
 
 Write a captivating, beautifully structured English reading story based on the premise:
 "${topic}"
@@ -340,75 +345,69 @@ JSON FORMAT:
   ]
 }`;
 
-      const modelsToTry = [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-2.5-flash",
-        "gemini-1.5-pro",
-      ];
+        for (const model of discovery.models.slice(0, 3)) {
+          try {
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/${model.name}:generateContent?key=${effectiveApiKey}`;
+            const response = await fetch(geminiUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  responseMimeType: "application/json",
+                  temperature: 0.7,
+                },
+              }),
+              signal: AbortSignal.timeout(15000),
+            });
 
-      for (const model of modelsToTry) {
-        try {
-          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${effectiveApiKey}`;
-          const response = await fetch(geminiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: {
-                responseMimeType: "application/json",
-                temperature: 0.7,
-              },
-            }),
-            signal: AbortSignal.timeout(15000),
-          });
+            if (response.ok) {
+              const data = await response.json();
+              const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (rawText) {
+                const cleanJson = rawText.replace(/```json\s*/g, "").replace(/```\s*$/g, "").trim();
+                const parsed = JSON.parse(cleanJson);
 
-          if (response.ok) {
-            const data = await response.json();
-            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (rawText) {
-              const cleanJson = rawText.replace(/```json\s*/g, "").replace(/```\s*$/g, "").trim();
-              const parsed = JSON.parse(cleanJson);
+                const covers = CATEGORY_COVERS[category as StoryCategory] || CATEGORY_COVERS.Mystery;
+                const coverImage = covers[Math.floor(Math.random() * covers.length)];
 
-              const covers = CATEGORY_COVERS[category as StoryCategory] || CATEGORY_COVERS.Mystery;
-              const coverImage = covers[Math.floor(Math.random() * covers.length)];
+                const structuredParagraphs = tokenizeParagraphs(parsed.paragraphs || [], level as CEFRLevel);
+                const calculatedWordCount = structuredParagraphs.reduce((acc, p) => acc + p.tokens.length, 0);
 
-              const structuredParagraphs = tokenizeParagraphs(parsed.paragraphs || [], level as CEFRLevel);
-              const calculatedWordCount = structuredParagraphs.reduce((acc, p) => acc + p.tokens.length, 0);
+                const story: Story = {
+                  id: `story-${Date.now()}`,
+                  title: parsed.title || topic,
+                  titleTr: parsed.titleTr || parsed.title || topic,
+                  slug: parsed.slug ? slugify(parsed.slug) : slugify(parsed.title || topic),
+                  level: (parsed.level as CEFRLevel) || (level as CEFRLevel),
+                  category: (parsed.category as StoryCategory) || (category as StoryCategory),
+                  readTimeMinutes: Math.max(1, Math.ceil(calculatedWordCount / 60)),
+                  wordCount: calculatedWordCount || wordCount,
+                  coverImage,
+                  summary: parsed.summary || `An engaging story about ${topic}.`,
+                  summaryTr: parsed.summaryTr || `${topic} hakkında etkileyici bir hikaye.`,
+                  requiredVocabularyLevel: LEVEL_VOCAB_MAP[level as CEFRLevel] || 2,
+                  paragraphs: structuredParagraphs,
+                  quiz: parsed.quiz || [],
+                };
 
-              const story: Story = {
-                id: `story-${Date.now()}`,
-                title: parsed.title || topic,
-                titleTr: parsed.titleTr || parsed.title || topic,
-                slug: parsed.slug ? slugify(parsed.slug) : slugify(parsed.title || topic),
-                level: (parsed.level as CEFRLevel) || (level as CEFRLevel),
-                category: (parsed.category as StoryCategory) || (category as StoryCategory),
-                readTimeMinutes: Math.max(1, Math.ceil(calculatedWordCount / 60)),
-                wordCount: calculatedWordCount || wordCount,
-                coverImage,
-                summary: parsed.summary || `An engaging story about ${topic}.`,
-                summaryTr: parsed.summaryTr || `${topic} hakkında etkileyici bir hikaye.`,
-                requiredVocabularyLevel: LEVEL_VOCAB_MAP[level as CEFRLevel] || 2,
-                paragraphs: structuredParagraphs,
-                quiz: parsed.quiz || [],
-              };
-
-              const enrichedStory = enrichStoryTokens(story);
-              return NextResponse.json({
-                success: true,
-                story: enrichedStory,
-                source: "gemini",
-                model,
-              });
+                const enrichedStory = enrichStoryTokens(story);
+                return NextResponse.json({
+                  success: true,
+                  story: enrichedStory,
+                  source: "gemini",
+                  model: model.id,
+                });
+              }
+            } else {
+              const errorBody = await response.json().catch(() => null);
+              const errMsg = errorBody?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+              geminiErrorLog = `[${model.id}] ${errMsg}`;
             }
-          } else {
-            const errorBody = await response.json().catch(() => null);
-            const errMsg = errorBody?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-            geminiErrorLog = `[${model}] ${errMsg}`;
+          } catch (err: unknown) {
+            const errMsg = err instanceof Error ? err.message : "Fetch failed";
+            geminiErrorLog = `[${model.id}] ${errMsg}`;
           }
-        } catch (err: unknown) {
-          const errMsg = err instanceof Error ? err.message : "Fetch failed";
-          geminiErrorLog = `[${model}] ${errMsg}`;
         }
       }
     }

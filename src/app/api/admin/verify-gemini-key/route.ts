@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminEmail } from "@/lib/auth-admin";
-
-const MODELS_TO_CHECK = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-2.5-flash",
-  "gemini-1.5-pro",
-];
+import { getAvailableGeminiModels } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,16 +31,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 1. Discover available models via ModelService.ListModels
+    const discovery = await getAvailableGeminiModels(effectiveApiKey);
+    if (!discovery.success || discovery.models.length === 0) {
+      return NextResponse.json({
+        valid: false,
+        error: discovery.error || "No compatible Gemini models found for this API key.",
+      });
+    }
+
+    // 2. Test generation on the best available model
     let lastError = "";
 
-    for (const model of MODELS_TO_CHECK) {
+    for (const model of discovery.models.slice(0, 3)) {
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${effectiveApiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/${model.name}:generateContent?key=${effectiveApiKey}`;
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: "Hello, reply with 'OK'." }] }],
+            contents: [{ parts: [{ text: "Respond with 'OK'." }] }],
             generationConfig: {
               maxOutputTokens: 10,
               temperature: 0.1,
@@ -60,14 +64,15 @@ export async function POST(req: NextRequest) {
           const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "OK";
           return NextResponse.json({
             valid: true,
-            model,
-            message: `Successfully connected to Gemini API using ${model}!`,
+            model: model.id,
+            totalModelsFound: discovery.models.length,
+            availableModels: discovery.models.map((m) => m.id),
+            message: `Successfully connected! Active Model: ${model.id} (${discovery.models.length} models available).`,
             sampleResponse: reply.trim(),
           });
         } else {
           const errorData = await res.json().catch(() => null);
-          const errorMsg = errorData?.error?.message || `HTTP ${res.status}: ${res.statusText}`;
-          lastError = errorMsg;
+          lastError = errorData?.error?.message || `HTTP ${res.status}: ${res.statusText}`;
         }
       } catch (err: unknown) {
         lastError = err instanceof Error ? err.message : "Network error";
@@ -76,7 +81,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       valid: false,
-      error: lastError || "Failed to authenticate with Google Gemini API.",
+      error: lastError || "Failed to generate content with available Gemini models.",
+      availableModels: discovery.models.map((m) => m.id),
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error verifying Gemini API key";
