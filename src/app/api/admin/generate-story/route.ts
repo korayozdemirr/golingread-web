@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Story, CEFRLevel, StoryCategory, WordToken } from "@/types";
+import { Story, CEFRLevel, StoryCategory, Paragraph, WordToken } from "@/types";
 import { isAdminEmail } from "@/lib/auth-admin";
 import { enrichStoryTokens, enrichWordToken } from "@/lib/story-enricher";
 import { cleanWordToken } from "@/lib/dictionary";
@@ -215,6 +215,46 @@ function generateFallbackStory(
   return enrichStoryTokens(rawStory);
 }
 
+/**
+ * Converts raw paragraph texts into structured WordToken paragraphs
+ */
+function tokenizeParagraphs(
+  rawParagraphs: Array<{ id?: string; text?: string; turkishTranslation?: string; tokens?: WordToken[] }>,
+  storyLevel: CEFRLevel
+): Paragraph[] {
+  return rawParagraphs.map((p, idx) => {
+    const pId = p.id || `p-${idx + 1}`;
+    const trText = p.turkishTranslation || "";
+
+    if (Array.isArray(p.tokens) && p.tokens.length > 0) {
+      return {
+        id: pId,
+        turkishTranslation: trText,
+        tokens: p.tokens.map((t) => enrichWordToken(t, trText, storyLevel)),
+      };
+    }
+
+    const words = (p.text || "").trim().split(/\s+/).filter(Boolean);
+    const tokens: WordToken[] = words.map((w) => {
+      const clean = cleanWordToken(w);
+      return enrichWordToken(
+        {
+          text: w,
+          clean: clean || w,
+        },
+        trText,
+        storyLevel
+      );
+    });
+
+    return {
+      id: pId,
+      turkishTranslation: trText,
+      tokens,
+    };
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -236,68 +276,66 @@ export async function POST(req: NextRequest) {
     }
 
     const effectiveApiKey =
-      apiKey ||
+      apiKey?.trim() ||
       process.env.GEMINI_API_KEY ||
       process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
       process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
-    // If Gemini API Key is available, call Gemini API with model fallbacks
+    let geminiErrorLog = "";
+
+    // If Gemini API Key is available, call Gemini API
     if (effectiveApiKey) {
-      const prompt = `You are an expert ESL/EFL author specialized in Stephen Krashen's 95% Comprehensible Input hypothesis.
-Write an engaging, graded English reading story based on the topic: "${topic}".
+      const prompt = `You are an expert ESL/EFL graded reading author specialized in Stephen Krashen's 95% Comprehensible Input hypothesis ($i+1$).
 
-Target CEFR Level: ${level}
-Category: ${category}
-Target Word Count: ${wordCount} words
+Write a captivating, beautifully structured English reading story based on the premise:
+"${topic}"
 
-CRITICAL INSTRUCTIONS:
-1. Adhere strictly to CEFR ${level} English vocabulary and grammatical structures.
-2. For EVERY token in every paragraph, provide an AUTHENTIC and ACCURATE contextual Turkish translation in 'translationTr'. NEVER use dummy placeholder text like 'anlamı' or repeat the english word.
-3. Provide realistic phonetic IPA (e.g. '/ˈer.pɔːrt/') and correct part of speech.
-4. Return ONLY a valid, raw JSON object (NO markdown backticks, NO explanation text).
+REQUIREMENTS:
+1. Target CEFR Level: ${level} (Strictly adapt grammar, vocabulary, sentence length, and syntax to CEFR ${level}).
+2. Category: ${category}
+3. Target Word Count: Around ${wordCount} words (distributed across 3-4 engaging paragraphs).
+4. For each paragraph, provide the complete, high quality, natural Turkish translation.
+5. Provide 2 comprehension quiz questions with 4 options each, correct index, and concise explanation.
+6. Return ONLY valid JSON (no markdown backticks, no conversational intro).
 
-JSON Structure:
+JSON FORMAT:
 {
-  "title": "Short catchy English title",
-  "titleTr": "Doğal Türkçe başlık",
-  "slug": "kebab-case-slug",
-  "summary": "1-2 sentence English summary",
-  "summaryTr": "1-2 cümlelik akıcı Türkçe özet",
-  "level": "${level}",
-  "category": "${category}",
-  "readTimeMinutes": 3,
-  "wordCount": ${wordCount},
+  "title": "Engaging Catchy English Title",
+  "titleTr": "Doğal ve Çekici Türkçe Başlık",
+  "slug": "kebab-case-title-slug",
+  "summary": "1-2 sentence English summary capturing the essence of the story.",
+  "summaryTr": "1-2 cümlelik akıcı ve etkileyici Türkçe hikaye özeti.",
   "paragraphs": [
     {
       "id": "p-1",
-      "turkishTranslation": "Bu paragrafın tam, akıcı Türkçe çevirisi.",
-      "tokens": [
-        {
-          "text": "The",
-          "clean": "The",
-          "translationTr": "o / belirli artikel",
-          "ipa": "/ðə/",
-          "partOfSpeech": "det",
-          "level": "A1",
-          "exampleSentence": "The morning was bright."
-        }
-      ]
+      "text": "Full natural English paragraph here...",
+      "turkishTranslation": "Bu paragrafın eksiksiz ve akıcı Türkçe çevirisi..."
+    },
+    {
+      "id": "p-2",
+      "text": "Second English paragraph...",
+      "turkishTranslation": "İkinci paragrafın Türkçe çevirisi..."
+    },
+    {
+      "id": "p-3",
+      "text": "Third English paragraph...",
+      "turkishTranslation": "Üçüncü paragrafın Türkçe çevirisi..."
     }
   ],
   "quiz": [
     {
       "id": "q-1",
-      "question": "Comprehension question in English",
+      "question": "Comprehension question in English?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctIndex": 0,
       "explanation": "Why this answer is correct."
     },
     {
       "id": "q-2",
-      "question": "Second question in English",
+      "question": "Second comprehension question in English?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctIndex": 1,
-      "explanation": "Explanation."
+      "explanation": "Explanation for the correct choice."
     }
   ]
 }`;
@@ -305,6 +343,7 @@ JSON Structure:
       const modelsToTry = [
         "gemini-2.0-flash",
         "gemini-1.5-flash",
+        "gemini-2.5-flash",
         "gemini-1.5-pro",
       ];
 
@@ -321,6 +360,7 @@ JSON Structure:
                 temperature: 0.7,
               },
             }),
+            signal: AbortSignal.timeout(15000),
           });
 
           if (response.ok) {
@@ -329,33 +369,46 @@ JSON Structure:
             if (rawText) {
               const cleanJson = rawText.replace(/```json\s*/g, "").replace(/```\s*$/g, "").trim();
               const parsed = JSON.parse(cleanJson);
+
               const covers = CATEGORY_COVERS[category as StoryCategory] || CATEGORY_COVERS.Mystery;
               const coverImage = covers[Math.floor(Math.random() * covers.length)];
 
+              const structuredParagraphs = tokenizeParagraphs(parsed.paragraphs || [], level as CEFRLevel);
+              const calculatedWordCount = structuredParagraphs.reduce((acc, p) => acc + p.tokens.length, 0);
+
               const story: Story = {
                 id: `story-${Date.now()}`,
-                title: parsed.title,
-                titleTr: parsed.titleTr || parsed.title,
-                slug: parsed.slug || slugify(parsed.title),
-                level: (parsed.level as CEFRLevel) || level,
-                category: (parsed.category as StoryCategory) || category,
-                readTimeMinutes: parsed.readTimeMinutes || 3,
-                wordCount: parsed.wordCount || wordCount,
+                title: parsed.title || topic,
+                titleTr: parsed.titleTr || parsed.title || topic,
+                slug: parsed.slug ? slugify(parsed.slug) : slugify(parsed.title || topic),
+                level: (parsed.level as CEFRLevel) || (level as CEFRLevel),
+                category: (parsed.category as StoryCategory) || (category as StoryCategory),
+                readTimeMinutes: Math.max(1, Math.ceil(calculatedWordCount / 60)),
+                wordCount: calculatedWordCount || wordCount,
                 coverImage,
-                summary: parsed.summary,
-                summaryTr: parsed.summaryTr || parsed.summary,
+                summary: parsed.summary || `An engaging story about ${topic}.`,
+                summaryTr: parsed.summaryTr || `${topic} hakkında etkileyici bir hikaye.`,
                 requiredVocabularyLevel: LEVEL_VOCAB_MAP[level as CEFRLevel] || 2,
-                paragraphs: parsed.paragraphs,
+                paragraphs: structuredParagraphs,
                 quiz: parsed.quiz || [],
               };
 
-              // Enrich all tokens with dictionary verification
               const enrichedStory = enrichStoryTokens(story);
-              return NextResponse.json({ success: true, story: enrichedStory });
+              return NextResponse.json({
+                success: true,
+                story: enrichedStory,
+                source: "gemini",
+                model,
+              });
             }
+          } else {
+            const errorBody = await response.json().catch(() => null);
+            const errMsg = errorBody?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+            geminiErrorLog = `[${model}] ${errMsg}`;
           }
-        } catch {
-          // try next model
+        } catch (err: unknown) {
+          const errMsg = err instanceof Error ? err.message : "Fetch failed";
+          geminiErrorLog = `[${model}] ${errMsg}`;
         }
       }
     }
@@ -368,7 +421,12 @@ JSON Structure:
       wordCount
     );
 
-    return NextResponse.json({ success: true, story });
+    return NextResponse.json({
+      success: true,
+      story,
+      source: "fallback",
+      errorDetails: effectiveApiKey && geminiErrorLog ? geminiErrorLog : undefined,
+    });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Internal generation error";
     return NextResponse.json({ error: msg }, { status: 500 });

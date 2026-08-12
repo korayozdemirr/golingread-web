@@ -76,14 +76,73 @@ export default function AdminGeneratePage() {
   const [wordCount, setWordCount] = useState<number>(180);
   const [apiKey, setApiKey] = useState<string>("");
   const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false);
+  const [isTestingKey, setIsTestingKey] = useState<boolean>(false);
+  const [keyTestStatus, setKeyTestStatus] = useState<{ valid?: boolean; message?: string } | null>(null);
 
   // Generation & Publishing State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationStep, setGenerationStep] = useState<string>("");
   const [generatedStory, setGeneratedStory] = useState<Story | null>(null);
+  const [generationSource, setGenerationSource] = useState<{ source?: "gemini" | "fallback"; model?: string; errorDetails?: string } | null>(null);
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [publishSuccessSlug, setPublishSuccessSlug] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Load saved API Key from localStorage on mount
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedKey = localStorage.getItem("golingread_gemini_api_key");
+      if (savedKey) {
+        setApiKey(savedKey);
+        setShowApiKeyInput(true);
+      }
+    }
+  }, []);
+
+  const handleApiKeyChange = (val: string) => {
+    setApiKey(val);
+    setKeyTestStatus(null);
+    if (typeof window !== "undefined") {
+      if (val.trim()) {
+        localStorage.setItem("golingread_gemini_api_key", val.trim());
+      } else {
+        localStorage.removeItem("golingread_gemini_api_key");
+      }
+    }
+  };
+
+  const handleTestApiKey = async () => {
+    if (!apiKey.trim()) {
+      setKeyTestStatus({ valid: false, message: "Please enter an API key to test." });
+      return;
+    }
+    setIsTestingKey(true);
+    setKeyTestStatus(null);
+    try {
+      const res = await fetch("/api/admin/verify-gemini-key", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": user?.email || "",
+        },
+        body: JSON.stringify({
+          apiKey: apiKey.trim(),
+          userEmail: user?.email,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setKeyTestStatus({ valid: true, message: data.message || `Connected to ${data.model}!` });
+      } else {
+        setKeyTestStatus({ valid: false, message: data.error || "Failed to verify API key with Google Gemini." });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Network error testing API key";
+      setKeyTestStatus({ valid: false, message: msg });
+    } finally {
+      setIsTestingKey(false);
+    }
+  };
 
   // Preview Interactive State
   const [selectedToken, setSelectedToken] = useState<WordToken | null>(null);
@@ -137,6 +196,11 @@ export default function AdminGeneratePage() {
       }
 
       setGeneratedStory(enrichStoryTokens(data.story));
+      setGenerationSource({
+        source: data.source,
+        model: data.model,
+        errorDetails: data.errorDetails,
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error generating story.";
       setErrorMessage(msg);
@@ -394,16 +458,60 @@ export default function AdminGeneratePage() {
               className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 cursor-pointer"
             >
               <span>⚙️ {showApiKeyInput ? "Hide Custom API Key" : "Add Custom Gemini API Key (Optional)"}</span>
+              {apiKey && <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">Saved in Browser</span>}
             </button>
+
             {showApiKeyInput && (
-              <div className="mt-3 p-4 rounded-2xl bg-[#F7F4EE] dark:bg-[#252528] border border-[#E5E7EB] dark:border-[#2E2E2E]">
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="AIzaSy... (Leave empty to use server default or smart fallback)"
-                  className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] text-[#1F2937] dark:text-[#E5E7EB]"
-                />
+              <div className="mt-3 p-4 rounded-2xl bg-[#F7F4EE] dark:bg-[#252528] border border-[#E5E7EB] dark:border-[#2E2E2E] space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#9CA3AF] mb-1">
+                    Google Gemini API Key
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => handleApiKeyChange(e.target.value)}
+                      placeholder="AIzaSy... (Get free key from aistudio.google.com)"
+                      className="flex-1 px-3.5 py-2.5 rounded-xl text-xs bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] text-[#1F2937] dark:text-[#E5E7EB] font-mono focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTestApiKey}
+                      disabled={isTestingKey || !apiKey.trim()}
+                      className="py-2 px-4 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white transition-colors cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
+                    >
+                      {isTestingKey ? (
+                        <>
+                          <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          <span>Testing...</span>
+                        </>
+                      ) : (
+                        <span>⚡ Test Key</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {keyTestStatus && (
+                  <div
+                    className={`p-3 rounded-xl text-xs font-medium border ${
+                      keyTestStatus.valid
+                        ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200"
+                        : "bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200"
+                    }`}
+                  >
+                    {keyTestStatus.valid ? "✅ " : "❌ "}
+                    {keyTestStatus.message}
+                  </div>
+                )}
+
+                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed">
+                  💡 Your API key is stored securely in your browser&apos;s local storage. When provided, the studio uses Gemini 2.0 Flash for creative graded stories with 95% comprehensible input.
+                </p>
               </div>
             )}
           </div>
@@ -446,9 +554,22 @@ export default function AdminGeneratePage() {
             {/* Preview Action Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E5E7EB] dark:border-[#2E2E2E]">
               <div>
-                <span className="text-xs uppercase font-bold tracking-wider text-indigo-600 dark:text-indigo-400 block mb-1">
-                  Ready for Review & Publishing
-                </span>
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                  <span className="text-xs uppercase font-bold tracking-wider text-indigo-600 dark:text-indigo-400">
+                    Ready for Review & Publishing
+                  </span>
+                  {generationSource?.source === "gemini" ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-300 dark:border-purple-800 flex items-center gap-1">
+                      <span>✨</span>
+                      <span>AI Powered ({generationSource.model || "Gemini"})</span>
+                    </span>
+                  ) : generationSource?.source === "fallback" ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                      <span>⚡</span>
+                      <span>Offline Fallback Engine</span>
+                    </span>
+                  ) : null}
+                </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-[#1F2937] dark:text-[#E5E7EB] font-serif">
                   {generatedStory.title}
                 </h2>
