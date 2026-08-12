@@ -114,3 +114,6 @@ The core thesis is that natural language acquisition happens effortlessly when l
 6. **AI Story Generator & Supabase Publishing:**
    - *Problem:* Manual creation of tokenized stories, translations, and quizzes was tedious and slow.
    - *Solution:* Built AI Story Studio (`/admin/generate`) with automated paragraph translation, word tokenization, IPA generation, and 1-click publishing directly to Supabase.
+7. **Admin Role-Based Authorization Guard (Security):**
+   - *Problem:* Unrestricted access to `/admin/generate` and `/api/admin/*` could allow unauthorized visitors to consume AI tokens and publish arbitrary content to the database.
+   - *Solution:* Implemented a 3-tier security architecture using `NEXT_PUBLIC_ADMIN_EMAILS`, an `isAdminEmail` helper ([auth-admin.ts](file:///Users/korayozdemir/golingread-web/src/lib/auth-admin.ts)), a 403 access control screen on `/admin/generate`, conditional Navbar link rendering, and server-side request header verification on API endpoints.
