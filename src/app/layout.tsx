@@ -14,7 +14,7 @@ const lora = Lora({
   display: "swap",
 });
 
-import { AppProvider } from "@/context/AppContext";
+import { AppInitializer } from "@/components/AppInitializer";
 import { AuthModal } from "@/components/auth/AuthModal";
 
 export const metadata: Metadata = {
@@ -31,10 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${lora.variable}`}>
       <body className="min-h-screen flex flex-col font-sans selection:bg-indigo-500/20 selection:text-indigo-700 dark:selection:bg-indigo-400/20 dark:selection:text-indigo-300">
-        <AppProvider>
+        <AppInitializer />
           {children}
           <AuthModal />
-        </AppProvider>
+
       </body>
     </html>
   );

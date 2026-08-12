@@ -6,7 +6,7 @@ import { Story, CEFRLevel, StoryCategory, WordToken } from "@/types";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WordPopover } from "@/components/reader/WordPopover";
-import { useAppContext } from "@/context/AppContext";
+import { useAppStore } from "@/store/useAppStore";
 
 const PRESET_TOPICS = [
   {
@@ -59,7 +59,7 @@ const CATEGORIES: StoryCategory[] = [
 ];
 
 export default function AdminGeneratePage() {
-  const { savedWordsMap, toggleSaveWord } = useAppContext();
+  const { savedWordsMap, toggleSaveWord } = useAppStore();
 
   // Form State
   const [topic, setTopic] = useState<string>("");

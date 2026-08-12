@@ -7,7 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
 import { LevelTestModal } from "@/components/level-test/LevelTestModal";
-import { useAppContext } from "@/context/AppContext";
+import { useAppStore } from "@/store/useAppStore";
 
 interface StoryReaderViewProps {
   story: Story;
@@ -22,7 +22,7 @@ export const StoryReaderView: React.FC<StoryReaderViewProps> = ({ story }) => {
     isLevelTestModalOpen,
     closeLevelTestModal,
     changeLevel,
-  } = useAppContext();
+  } = useAppStore();
 
   const handleBackToFeed = () => {
     router.push("/");

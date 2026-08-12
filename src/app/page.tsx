@@ -10,7 +10,7 @@ import { HeroSection } from "@/components/feed/HeroSection";
 import { FilterBar } from "@/components/feed/FilterBar";
 import { StoryCard } from "@/components/feed/StoryCard";
 import { LevelTestModal } from "@/components/level-test/LevelTestModal";
-import { useAppContext } from "@/context/AppContext";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function Home() {
   const {
@@ -21,7 +21,7 @@ export default function Home() {
     isLevelTestModalOpen,
     openLevelTestModal,
     closeLevelTestModal,
-  } = useAppContext();
+  } = useAppStore();
 
   // Stories State (Hybrid DB + Mock)
   const [stories, setStories] = useState<Story[]>(MOCK_STORIES);

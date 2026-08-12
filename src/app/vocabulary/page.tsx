@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { LevelTestModal } from "@/components/level-test/LevelTestModal";
-import { useAppContext } from "@/context/AppContext";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function VocabularyPage() {
   const {
@@ -15,7 +15,7 @@ export default function VocabularyPage() {
     isLevelTestModalOpen,
     closeLevelTestModal,
     changeLevel,
-  } = useAppContext();
+  } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<"flashcards" | "list">("flashcards");
   const [currentIndex, setCurrentIndex] = useState<number>(0);
