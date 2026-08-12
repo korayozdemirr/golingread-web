@@ -58,15 +58,15 @@ export async function getAvailableGeminiModels(apiKey: string): Promise<{
         };
       });
 
-    // Priority sorting: prefer modern flash models first
+    // Priority sorting: prefer modern flash models first and deprioritize deprecated ones
     validModels.sort((a, b) => {
       const getScore = (id: string) => {
-        if (id.includes("2.0-flash")) return 100;
-        if (id.includes("1.5-flash-8b")) return 90;
-        if (id.includes("1.5-flash")) return 80;
-        if (id.includes("2.0-pro")) return 70;
-        if (id.includes("1.5-pro")) return 60;
-        if (id.includes("gemini-pro")) return 50;
+        if (id === "gemini-2.5-flash" || id === "gemini-2.5-flash-latest") return 120;
+        if (id === "gemini-2.0-flash" || id === "gemini-2.0-flash-latest") return 110;
+        if (id === "gemini-1.5-flash" || id === "gemini-1.5-flash-latest") return 100;
+        if (id.includes("flash-8b")) return 90;
+        if (id.includes("flash")) return 80;
+        if (id.includes("pro")) return 20; // Deprecated or higher latency for reading stories
         return 10;
       };
       return getScore(b.id) - getScore(a.id);
