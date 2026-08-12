@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { CEFRLevel, StoryCategory } from "@/types";
+import React, { useState, useEffect, useMemo } from "react";
+import { Story, CEFRLevel, StoryCategory } from "@/types";
 import { MOCK_STORIES } from "@/data/mockStories";
+import { getAllStories } from "@/lib/stories";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/feed/HeroSection";
@@ -22,6 +23,18 @@ export default function Home() {
     closeLevelTestModal,
   } = useAppContext();
 
+  // Stories State (Hybrid DB + Mock)
+  const [stories, setStories] = useState<Story[]>(MOCK_STORIES);
+
+  // Load all stories from Supabase on mount
+  useEffect(() => {
+    getAllStories().then((loaded) => {
+      if (loaded && loaded.length > 0) {
+        setStories(loaded);
+      }
+    });
+  }, []);
+
   // Feed Filters
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<CEFRLevel | "ALL">("ALL");
@@ -29,7 +42,7 @@ export default function Home() {
 
   // Filtered stories for the feed
   const filteredStories = useMemo(() => {
-    return MOCK_STORIES.filter((story) => {
+    return stories.filter((story) => {
       const matchesSearch =
         searchQuery === "" ||
         story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -43,7 +56,7 @@ export default function Home() {
 
       return matchesSearch && matchesLevel && matchesCategory;
     });
-  }, [searchQuery, selectedLevelFilter, selectedCategoryFilter]);
+  }, [stories, searchQuery, selectedLevelFilter, selectedCategoryFilter]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFBF7] dark:bg-[#121212] text-[#1F2937] dark:text-[#E5E7EB] transition-colors duration-200">

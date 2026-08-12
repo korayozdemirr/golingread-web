@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MOCK_STORIES } from "@/data/mockStories";
+import { getAllStories, getStoryBySlug } from "@/lib/stories";
 import { StoryReaderView } from "@/components/reader/StoryReaderView";
 
 interface PageProps {
@@ -10,14 +10,15 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return MOCK_STORIES.map((story) => ({
+  const stories = await getAllStories();
+  return stories.map((story) => ({
     slug: story.slug,
   }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const story = MOCK_STORIES.find((s) => s.slug === slug || s.id === slug);
+  const story = await getStoryBySlug(slug);
 
   if (!story) {
     return {
@@ -60,7 +61,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function StoryPage({ params }: PageProps) {
   const { slug } = await params;
-  const story = MOCK_STORIES.find((s) => s.slug === slug || s.id === slug);
+  const story = await getStoryBySlug(slug);
 
   if (!story) {
     notFound();
