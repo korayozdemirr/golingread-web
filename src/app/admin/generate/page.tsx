@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WordPopover } from "@/components/reader/WordPopover";
 import { useAppContext } from "@/context/AppContext";
+import { enrichStoryTokens } from "@/lib/story-enricher";
 
 const PRESET_TOPICS = [
   {
@@ -135,7 +136,7 @@ export default function AdminGeneratePage() {
         throw new Error(data.error || "Failed to generate story.");
       }
 
-      setGeneratedStory(data.story);
+      setGeneratedStory(enrichStoryTokens(data.story));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error generating story.";
       setErrorMessage(msg);

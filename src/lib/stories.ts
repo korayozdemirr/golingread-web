@@ -1,6 +1,7 @@
 import { Story } from "@/types";
 import { MOCK_STORIES } from "@/data/mockStories";
 import { supabase } from "@/lib/supabase";
+import { enrichStoryTokens } from "@/lib/story-enricher";
 
 /**
  * Fetch all stories from Supabase `stories` table, merging with MOCK_STORIES.
@@ -53,9 +54,9 @@ export async function getAllStories(): Promise<Story[]> {
       }
     }
 
-    return combined;
+    return combined.map((s) => enrichStoryTokens(s));
   } catch {
-    return MOCK_STORIES;
+    return MOCK_STORIES.map((s) => enrichStoryTokens(s));
   }
 }
 
@@ -71,7 +72,7 @@ export async function getStoryBySlug(slug: string): Promise<Story | null> {
       .maybeSingle();
 
     if (!error && row) {
-      return {
+      const rawStory: Story = {
         id: String(row.id),
         title: row.title,
         titleTr: row.title_tr || row.titleTr || row.title,
@@ -88,6 +89,7 @@ export async function getStoryBySlug(slug: string): Promise<Story | null> {
         paragraphs: typeof row.paragraphs === "string" ? JSON.parse(row.paragraphs) : row.paragraphs,
         quiz: typeof row.quiz === "string" ? JSON.parse(row.quiz) : row.quiz,
       };
+      return enrichStoryTokens(rawStory);
     }
   } catch {
     // ignore
@@ -95,7 +97,7 @@ export async function getStoryBySlug(slug: string): Promise<Story | null> {
 
   // Fallback to MOCK_STORIES
   const mockStory = MOCK_STORIES.find((s) => s.slug === slug || s.id === slug);
-  return mockStory || null;
+  return mockStory ? enrichStoryTokens(mockStory) : null;
 }
 
 /**

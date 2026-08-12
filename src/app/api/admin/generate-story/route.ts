@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Story, CEFRLevel, StoryCategory, WordToken } from "@/types";
 import { isAdminEmail } from "@/lib/auth-admin";
+import { enrichStoryTokens, enrichWordToken } from "@/lib/story-enricher";
+import { cleanWordToken } from "@/lib/dictionary";
 
 const LEVEL_VOCAB_MAP: Record<CEFRLevel, number> = {
   A1: 1,
@@ -54,80 +56,78 @@ function slugify(text: string): string {
 }
 
 /**
- * Intelligent fallback generator when no external AI API key is configured.
+ * Themed fallback story templates when offline or without external AI API
  */
-function generateFallbackStory(
-  topic: string,
-  level: CEFRLevel,
-  category: StoryCategory,
-  targetWordCount: number
-): Story {
+function getThemedFallbackNarrative(topic: string, category: StoryCategory) {
+  const lowerTopic = topic.toLowerCase();
+
+  // Airport & Travel Theme
+  if (lowerTopic.includes("airport") || lowerTopic.includes("flight") || lowerTopic.includes("plane") || lowerTopic.includes("travel")) {
+    return {
+      title: "The Busy Airport Morning",
+      titleTr: "Yoğun Bir Havalimanı Sabahı",
+      paragraphs: [
+        {
+          text: "Every morning, the quiet airport terminal woke up with soft light shining through the wide windows. Passengers carried their luggage and waited patiently near the departure gate for the announcement.",
+          tr: "Her sabah, sessiz havalimanı terminali geniş pencerelerden süzülen yumuşak ışıkla uyanırdı. Yolcular bagajlarını taşır ve anons için kalkış kapısının yanında sabırla beklerlerdi.",
+        },
+        {
+          text: "When the airplane arrived on the runway, a gentle voice called the travelers for boarding. Looking at the blue sky ahead, everyone felt ready for a new journey full of wonder and discovery.",
+          tr: "Uçak piste indiğinde, nazik bir ses yolcuları uçağa biniş için çağırdı. İlerideki mavi gökyüzüne bakarken herkes merak ve keşif dolu yeni bir yolculuğa hazır hissetti.",
+        },
+        {
+          text: "By sunset, the flight landed safely at the destination. Walking through the city streets with a calm heart, the traveler understood that every journey begins with curiosity and patience.",
+          tr: "Gün batımına doğru uçak hedefe güvenle indi. Sakin bir kalple şehir sokaklarında yürürken, gezgin her yolculuğun merak ve sabırla başladığını anladı.",
+        },
+      ],
+      quiz: [
+        {
+          id: "q-1",
+          question: "Where did the passengers wait for the announcement?",
+          options: ["Near the departure gate", "In a dark forest", "At the library entrance", "Outside the city"],
+          correctIndex: 0,
+          explanation: "The story mentions passengers waited patiently near the departure gate.",
+        },
+        {
+          id: "q-2",
+          question: "How did the flight conclude by sunset?",
+          options: [
+            "It was cancelled due to rain",
+            "It landed safely at the destination",
+            "The plane flew backward",
+            "The travelers returned home immediately",
+          ],
+          correctIndex: 1,
+          explanation: "The story states that by sunset the flight landed safely at the destination.",
+        },
+      ],
+    };
+  }
+
+  // General Adaptive Narrative
   const cleanTitle = topic
     .split(" ")
     .slice(0, 5)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
-  const title = cleanTitle || `The Secrets of ${category}`;
-  const slug = slugify(title) + `-${Date.now().toString().slice(-4)}`;
-
-  const covers = CATEGORY_COVERS[category] || CATEGORY_COVERS.Mystery;
-  const coverImage = covers[Math.floor(Math.random() * covers.length)];
-
-  // Craft leveled paragraphs
-  const p1Text = `Every morning, the quiet town held a secret known only to those who listened carefully. When ${topic.toLowerCase()} was first discovered, nobody expected how much it would change the ordinary days ahead.`;
-  const p1Tr = `Her sabah, sessiz kasaba sadece dikkatle dinleyenlerin bildiği bir sır barındırırdı. ${topic} ilk keşfedildiğinde, kimse ilerideki sıradan günleri ne kadar değiştireceğini tahmin etmemişti.`;
-
-  const p2Text = `As the hours passed gently, gentle light illuminated the path forward. Walking through the narrow streets, a soft breeze whispered stories of ancient memories and timeless wonders that time had forgotten.`;
-  const p2Tr = `Saatler usulca geçerken, yumuşak bir ışık önlerindeki yolu aydınlattı. Dar sokaklarda yürürken, hafif bir esinti zamanın unuttuğu kadim hatıraların ve zamansız mucizelerin hikayelerini fısıldadı.`;
-
-  const p3Text = `By sunset, the mystery was finally understood. With newfound wisdom and a peaceful heart, looking back at the journey proved that true discovery always begins with curiosity and patience.`;
-  const p3Tr = `Gün batımına doğru, gizem nihayet anlaşıldı. Yeni edinilen bilgelik ve huzurlu bir kalple yolculuğa dönüp bakıldığında, gerçek keşfin her zaman merak ve sabırla başladığı kanıtlandı.`;
-
-  const paragraphsRaw = [
-    { text: p1Text, tr: p1Tr },
-    { text: p2Text, tr: p2Tr },
-    { text: p3Text, tr: p3Tr },
-  ];
-
-  const paragraphs = paragraphsRaw.map((p, pIdx) => {
-    const words = p.text.split(/\s+/);
-    const tokens: WordToken[] = words.map((w) => {
-      const clean = w.replace(/[^\w]/g, "");
-      return {
-        text: w,
-        clean: clean || w,
-        translationTr: `${clean} anlamı`,
-        ipa: `/${clean.toLowerCase()}/`,
-        partOfSpeech: "noun",
-        level: level,
-        exampleSentence: `They observed the ${clean.toLowerCase()} closely.`,
-      };
-    });
-
-    return {
-      id: `p-${pIdx + 1}`,
-      tokens,
-      turkishTranslation: p.tr,
-    };
-  });
-
-  const totalWords = paragraphs.reduce((acc, p) => acc + p.tokens.length, 0);
-
   return {
-    id: `gen-${Date.now()}`,
-    title,
-    titleTr: `${title} (Türkçe Başlık)`,
-    slug,
-    level,
-    category,
-    readTimeMinutes: Math.max(1, Math.ceil(totalWords / 60)),
-    wordCount: totalWords || targetWordCount,
-    coverImage,
-    summary: `An inspiring ${category.toLowerCase()} story exploring ${topic.toLowerCase()} with curated level ${level} vocabulary.`,
-    summaryTr: `${topic} konusunu ${level} seviyesine uygun kelimelerle ele alan etkileyici bir ${category.toLowerCase()} hikayesi.`,
-    requiredVocabularyLevel: LEVEL_VOCAB_MAP[level] || 2,
-    paragraphs,
+    title: cleanTitle || `The Secrets of ${category}`,
+    titleTr: `${cleanTitle || category} Gizemi`,
+    paragraphs: [
+      {
+        text: `Every morning, the quiet town held a secret known only to those who listened carefully. When ${topic.toLowerCase()} was first discovered, nobody expected how much it would change the ordinary days ahead.`,
+        tr: `Her sabah, sessiz kasaba sadece dikkatle dinleyenlerin bildiği bir sır barındırırdı. ${topic} ilk keşfedildiğinde, kimse ilerideki sıradan günleri ne kadar değiştireceğini tahmin etmemişti.`,
+      },
+      {
+        text: `As the hours passed gently, soft light illuminated the path forward. Walking through the narrow streets, a gentle breeze whispered stories of ancient memories and timeless wonders that time had forgotten.`,
+        tr: `Saatler usulca geçerken, yumuşak bir ışık önlerindeki yolu aydınlattı. Dar sokaklarda yürürken, hafif bir esinti zamanın unuttuğu kadim hatıraların ve zamansız mucizelerin hikayelerini fısıldadı.`,
+      },
+      {
+        text: `By sunset, the mystery was finally understood. With newfound wisdom and a peaceful heart, looking back at the journey proved that true discovery always begins with curiosity and patience.`,
+        tr: `Gün batımına doğru, gizem nihayet anlaşıldı. Yeni edinilen bilgelik ve huzurlu bir kalple yolculuğa dönüp bakıldığında, gerçek keşfin her zaman merak ve sabırla başladığı kanıtlandı.`,
+      },
+    ],
     quiz: [
       {
         id: "q-1",
@@ -143,7 +143,7 @@ function generateFallbackStory(
       },
       {
         id: "q-2",
-        question: "How did the journey end by sunset?",
+        question: "How did the journey conclude by sunset?",
         options: [
           "With confusion and sadness",
           "With peaceful understanding and curiosity",
@@ -155,6 +155,64 @@ function generateFallbackStory(
       },
     ],
   };
+}
+
+/**
+ * Fallback generator with fully authentic token translations and IPA
+ */
+function generateFallbackStory(
+  topic: string,
+  level: CEFRLevel,
+  category: StoryCategory,
+  targetWordCount: number
+): Story {
+  const narrative = getThemedFallbackNarrative(topic, category);
+  const slug = slugify(narrative.title) + `-${Date.now().toString().slice(-4)}`;
+
+  const covers = CATEGORY_COVERS[category] || CATEGORY_COVERS.Mystery;
+  const coverImage = covers[Math.floor(Math.random() * covers.length)];
+
+  const paragraphs = narrative.paragraphs.map((p, pIdx) => {
+    const words = p.text.split(/\s+/);
+    const tokens: WordToken[] = words.map((w) => {
+      const clean = cleanWordToken(w);
+      return enrichWordToken(
+        {
+          text: w,
+          clean: clean || w,
+        },
+        p.tr,
+        level
+      );
+    });
+
+    return {
+      id: `p-${pIdx + 1}`,
+      tokens,
+      turkishTranslation: p.tr,
+    };
+  });
+
+  const totalWords = paragraphs.reduce((acc, p) => acc + p.tokens.length, 0);
+
+  const rawStory: Story = {
+    id: `gen-${Date.now()}`,
+    title: narrative.title,
+    titleTr: narrative.titleTr,
+    slug,
+    level,
+    category,
+    readTimeMinutes: Math.max(1, Math.ceil(totalWords / 60)),
+    wordCount: totalWords || targetWordCount,
+    coverImage,
+    summary: `An inspiring ${category.toLowerCase()} story exploring ${topic.toLowerCase()} with curated level ${level} vocabulary.`,
+    summaryTr: `${topic} konusunu ${level} seviyesine uygun kelimelerle ele alan etkileyici bir ${category.toLowerCase()} hikayesi.`,
+    requiredVocabularyLevel: LEVEL_VOCAB_MAP[level] || 2,
+    paragraphs,
+    quiz: narrative.quiz,
+  };
+
+  return enrichStoryTokens(rawStory);
 }
 
 export async function POST(req: NextRequest) {
@@ -180,9 +238,10 @@ export async function POST(req: NextRequest) {
     const effectiveApiKey =
       apiKey ||
       process.env.GEMINI_API_KEY ||
-      process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
-    // If Gemini API Key is available, call Gemini API
+    // If Gemini API Key is available, call Gemini API with model fallbacks
     if (effectiveApiKey) {
       const prompt = `You are an expert ESL/EFL author specialized in Stephen Krashen's 95% Comprehensible Input hypothesis.
 Write an engaging, graded English reading story based on the topic: "${topic}".
@@ -193,31 +252,34 @@ Target Word Count: ${wordCount} words
 
 CRITICAL INSTRUCTIONS:
 1. Adhere strictly to CEFR ${level} English vocabulary and grammatical structures.
-2. Return ONLY a valid, raw JSON object (NO markdown backticks, NO explanation).
-3. JSON Structure:
+2. For EVERY token in every paragraph, provide an AUTHENTIC and ACCURATE contextual Turkish translation in 'translationTr'. NEVER use dummy placeholder text like 'anlamı' or repeat the english word.
+3. Provide realistic phonetic IPA (e.g. '/ˈer.pɔːrt/') and correct part of speech.
+4. Return ONLY a valid, raw JSON object (NO markdown backticks, NO explanation text).
+
+JSON Structure:
 {
   "title": "Short catchy English title",
-  "titleTr": "Turkish translation of title",
+  "titleTr": "Doğal Türkçe başlık",
   "slug": "kebab-case-slug",
   "summary": "1-2 sentence English summary",
-  "summaryTr": "1-2 sentence Turkish summary",
+  "summaryTr": "1-2 cümlelik akıcı Türkçe özet",
   "level": "${level}",
   "category": "${category}",
   "readTimeMinutes": 3,
-  "wordCount": 180,
+  "wordCount": ${wordCount},
   "paragraphs": [
     {
       "id": "p-1",
-      "turkishTranslation": "Full natural Turkish translation of this paragraph.",
+      "turkishTranslation": "Bu paragrafın tam, akıcı Türkçe çevirisi.",
       "tokens": [
         {
-          "text": "Exact word with punctuation (e.g. 'library,')",
-          "clean": "Word without punctuation (e.g. 'library')",
-          "translationTr": "Contextual Turkish translation",
-          "ipa": "/ˈlaɪ.brər.i/",
-          "partOfSpeech": "noun" (or verb/adj/adv/prep/pron/conj/det),
-          "level": "${level}",
-          "exampleSentence": "Example sentence using the clean word."
+          "text": "The",
+          "clean": "The",
+          "translationTr": "o / belirli artikel",
+          "ipa": "/ðə/",
+          "partOfSpeech": "det",
+          "level": "A1",
+          "exampleSentence": "The morning was bright."
         }
       ]
     }
@@ -232,7 +294,7 @@ CRITICAL INSTRUCTIONS:
     },
     {
       "id": "q-2",
-      "question": "Second question",
+      "question": "Second question in English",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctIndex": 1,
       "explanation": "Explanation."
@@ -240,54 +302,65 @@ CRITICAL INSTRUCTIONS:
   ]
 }`;
 
-      try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveApiKey}`;
-        const response = await fetch(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              temperature: 0.7,
-            },
-          }),
-        });
+      const modelsToTry = [
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+      ];
 
-        if (response.ok) {
-          const data = await response.json();
-          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            const parsed = JSON.parse(rawText);
-            const covers = CATEGORY_COVERS[category as StoryCategory] || CATEGORY_COVERS.Mystery;
-            const coverImage = covers[Math.floor(Math.random() * covers.length)];
+      for (const model of modelsToTry) {
+        try {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${effectiveApiKey}`;
+          const response = await fetch(geminiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                responseMimeType: "application/json",
+                temperature: 0.7,
+              },
+            }),
+          });
 
-            const story: Story = {
-              id: `story-${Date.now()}`,
-              title: parsed.title,
-              titleTr: parsed.titleTr || parsed.title,
-              slug: parsed.slug || slugify(parsed.title),
-              level: (parsed.level as CEFRLevel) || level,
-              category: (parsed.category as StoryCategory) || category,
-              readTimeMinutes: parsed.readTimeMinutes || 3,
-              wordCount: parsed.wordCount || wordCount,
-              coverImage,
-              summary: parsed.summary,
-              summaryTr: parsed.summaryTr || parsed.summary,
-              requiredVocabularyLevel: LEVEL_VOCAB_MAP[level as CEFRLevel] || 2,
-              paragraphs: parsed.paragraphs,
-              quiz: parsed.quiz || [],
-            };
+          if (response.ok) {
+            const data = await response.json();
+            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawText) {
+              const cleanJson = rawText.replace(/```json\s*/g, "").replace(/```\s*$/g, "").trim();
+              const parsed = JSON.parse(cleanJson);
+              const covers = CATEGORY_COVERS[category as StoryCategory] || CATEGORY_COVERS.Mystery;
+              const coverImage = covers[Math.floor(Math.random() * covers.length)];
 
-            return NextResponse.json({ success: true, story });
+              const story: Story = {
+                id: `story-${Date.now()}`,
+                title: parsed.title,
+                titleTr: parsed.titleTr || parsed.title,
+                slug: parsed.slug || slugify(parsed.title),
+                level: (parsed.level as CEFRLevel) || level,
+                category: (parsed.category as StoryCategory) || category,
+                readTimeMinutes: parsed.readTimeMinutes || 3,
+                wordCount: parsed.wordCount || wordCount,
+                coverImage,
+                summary: parsed.summary,
+                summaryTr: parsed.summaryTr || parsed.summary,
+                requiredVocabularyLevel: LEVEL_VOCAB_MAP[level as CEFRLevel] || 2,
+                paragraphs: parsed.paragraphs,
+                quiz: parsed.quiz || [],
+              };
+
+              // Enrich all tokens with dictionary verification
+              const enrichedStory = enrichStoryTokens(story);
+              return NextResponse.json({ success: true, story: enrichedStory });
+            }
           }
+        } catch {
+          // try next model
         }
-      } catch {
-        // Fallback to local generator if external API fails
       }
     }
 
-    // Fallback Generator
+    // High quality themed Fallback Generator
     const story = generateFallbackStory(
       topic,
       level as CEFRLevel,

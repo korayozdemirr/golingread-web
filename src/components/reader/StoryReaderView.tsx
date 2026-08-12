@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Story, WordToken } from "@/types";
 import { Navbar } from "@/components/layout/Navbar";
@@ -8,13 +8,15 @@ import { Footer } from "@/components/layout/Footer";
 import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
 import { LevelTestModal } from "@/components/level-test/LevelTestModal";
 import { useAppContext } from "@/context/AppContext";
+import { enrichStoryTokens } from "@/lib/story-enricher";
 
 interface StoryReaderViewProps {
   story: Story;
 }
 
-export const StoryReaderView: React.FC<StoryReaderViewProps> = ({ story }) => {
+export const StoryReaderView: React.FC<StoryReaderViewProps> = ({ story: rawStory }) => {
   const router = useRouter();
+  const story = useMemo(() => enrichStoryTokens(rawStory), [rawStory]);
   const {
     savedWordsMap,
     toggleSaveWord,
