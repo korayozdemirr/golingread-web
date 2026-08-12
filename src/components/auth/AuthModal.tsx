@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAppContext } from "@/context/AppContext";
+import { useAppStore } from "@/store/useAppStore";
 
 export const AuthModal: React.FC = () => {
   const {
@@ -10,7 +10,7 @@ export const AuthModal: React.FC = () => {
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
-  } = useAppContext();
+  } = useAppStore();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState<string>("");

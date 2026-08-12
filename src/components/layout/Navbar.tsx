@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAppContext } from "@/context/AppContext";
+import { useAppStore } from "@/store/useAppStore";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -16,7 +16,7 @@ export const Navbar: React.FC = () => {
     openLevelTestModal,
     openAuthModal,
     signOut,
-  } = useAppContext();
+  } = useAppStore();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
 
