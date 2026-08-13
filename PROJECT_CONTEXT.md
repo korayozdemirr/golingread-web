@@ -137,6 +137,10 @@ The core thesis is that natural language acquisition happens effortlessly when l
 12. **Gamification (Streak, XP, Badges) & Social Engagement Layer:**
     - *Problem:* Readers lacked motivational incentives for continuous daily habit formation and community engagement under stories.
     - *Solution:* Implemented a daily streak engine (🔥), XP progression system (⚡ +50 story, +10 word, +5 like, +20 comment), milestone badge unlocks (🏆), animated story likes (❤️), and paper-theme responsive community discussion threads with guest auth prompts.
+13. **Multi-User Story Comment & Like Synchronization (Supabase + Realtime):**
+    - *Problem:* Users could not see each other's comments because client inserts without proper schema/ID handling or RLS permissions silently fell back to browser-specific `localStorage`, isolating comments to single devices.
+    - *Solution:* Created unified server endpoints ([/api/comments](file:///Users/korayozdemir/golingread-web/src/app/api/comments/route.ts), [/api/likes](file:///Users/korayozdemir/golingread-web/src/app/api/likes/route.ts)), complete PostgreSQL migration script ([supabase_schema.sql](file:///Users/korayozdemir/golingread-web/supabase_schema.sql)) with permissive RLS policies, and added Supabase Realtime channel subscriptions in [StoryEngagement.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryEngagement.tsx) for instant live comment synchronization across all concurrent readers.
+
 
 
 

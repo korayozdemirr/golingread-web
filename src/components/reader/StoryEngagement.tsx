@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { ReadingTheme, StoryComment } from "@/types";
 import { useAppContext } from "@/context/AppContext";
 import { fetchStoryLikes, toggleStoryLike, fetchStoryComments, addStoryComment } from "@/lib/engagement";
+import { supabase } from "@/lib/supabase";
 
 interface StoryEngagementProps {
   storySlug: string;
@@ -74,31 +75,69 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
   const [authIncentiveNotice, setAuthIncentiveNotice] = useState<string | null>(null);
 
   // Load Likes and Comments on story mount
-  useEffect(() => {
-    let isMounted = true;
+  const loadData = useCallback(async () => {
+    try {
+      const likesData = await fetchStoryLikes(storySlug, user?.id);
+      const commentsData = await fetchStoryComments(storySlug);
 
-    async function loadData() {
-      try {
-        const likesData = await fetchStoryLikes(storySlug, user?.id);
-        const commentsData = await fetchStoryComments(storySlug);
-
-        if (isMounted) {
-          setLikesCount(likesData.count);
-          setIsLiked(likesData.isLiked);
-          setComments(commentsData);
-          setIsLoadingComments(false);
-        }
-      } catch {
-        if (isMounted) setIsLoadingComments(false);
-      }
+      setLikesCount(likesData.count);
+      setIsLiked(likesData.isLiked);
+      setComments(commentsData);
+      setIsLoadingComments(false);
+    } catch {
+      setIsLoadingComments(false);
     }
+  }, [storySlug, user?.id]);
 
+  useEffect(() => {
     loadData();
+  }, [loadData]);
+
+  // Real-time listener for incoming comments from other users
+  useEffect(() => {
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel(`realtime:story_comments:${storySlug}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "story_comments",
+          filter: `story_slug=eq.${storySlug}`,
+        },
+        (payload) => {
+          const newRow = payload.new as Record<string, unknown>;
+          if (newRow && newRow.content) {
+            const incoming: StoryComment = {
+              id: String(newRow.id),
+              storySlug: String(newRow.story_slug || storySlug),
+              userId: newRow.user_id as string | undefined,
+              userName: (newRow.user_name as string) || "Reader",
+              userAvatar: newRow.user_avatar as string | undefined,
+              userLevel: (newRow.user_level as StoryComment["userLevel"]) || "A2",
+              content: String(newRow.content),
+              createdAt: (newRow.created_at as string) || new Date().toISOString(),
+              likesCount: (newRow.likes_count as number) || 0,
+            };
+
+            setComments((prev) => {
+              // Avoid duplicate if we already added it optimistically
+              if (prev.some((c) => c.id === incoming.id || (c.content === incoming.content && c.userName === incoming.userName))) {
+                return prev.map((c) => (c.content === incoming.content && c.userName === incoming.userName ? incoming : c));
+              }
+              return [incoming, ...prev];
+            });
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
-      isMounted = false;
+      supabase.removeChannel(channel);
     };
-  }, [storySlug, user?.id]);
+  }, [storySlug]);
 
   // Handle Like Button click
   const handleToggleLike = async () => {
@@ -138,11 +177,14 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
     setIsSubmittingComment(true);
     try {
       const created = await addStoryComment(storySlug, commentText.trim(), userProfile, user.id);
-      setComments((prev) => [created, ...prev]);
+      setComments((prev) => {
+        if (prev.some((c) => c.id === created.id)) return prev;
+        return [created, ...prev];
+      });
       setCommentText("");
       recordSocialAction("comment"); // +20 XP reward
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Error submitting comment:", err);
     } finally {
       setIsSubmittingComment(false);
     }
@@ -253,12 +295,24 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
         </div>
       </form>
 
-      {/* Comments List */}
-      <div className="space-y-4">
+      {/* Comments List Header with live refresh */}
+      <div className="flex items-center justify-between mb-4">
         <h2 className={`text-base font-bold font-serif ${theme.textClass}`}>
           Discussion ({comments.length})
         </h2>
+        <button
+          type="button"
+          onClick={loadData}
+          title="Refresh comments"
+          className={`text-xs ${theme.mutedClass} hover:text-indigo-600 flex items-center gap-1 cursor-pointer transition-colors`}
+        >
+          <span>🔄</span>
+          <span>Refresh</span>
+        </button>
+      </div>
 
+      {/* Comments List */}
+      <div className="space-y-4">
         {isLoadingComments ? (
           <div className={`text-xs py-6 text-center ${theme.mutedClass}`}>
             Loading comments...
