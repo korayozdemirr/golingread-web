@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
+import { BADGE_CATALOG } from "@/lib/badges";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -17,6 +18,8 @@ export const Navbar: React.FC = () => {
     openLevelTestModal,
     openAuthModal,
     signOut,
+    newlyUnlockedBadge,
+    dismissBadgeNotification,
   } = useAppContext();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
@@ -28,8 +31,33 @@ export const Navbar: React.FC = () => {
     .charAt(0)
     .toUpperCase();
 
+  const unlockedBadgeObjects = (userProfile.unlockedBadges || [])
+    .map((id) => BADGE_CATALOG.find((b) => b.id === id))
+    .filter(Boolean);
+
   return (
     <header className="sticky top-0 z-30 w-full border-b border-[#E5E7EB] dark:border-[#2E2E2E] bg-[#FDFBF7]/90 dark:bg-[#121212]/90 backdrop-blur-md transition-colors duration-200">
+      {/* Newly Unlocked Badge Celebration Toast */}
+      {newlyUnlockedBadge && (
+        <aside aria-label="Badge Unlocked Alert" className="bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white py-2 px-4 shadow-md text-xs font-bold flex items-center justify-between animate-in slide-in-from-top duration-300">
+          <div className="max-w-6xl mx-auto w-full flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-base animate-bounce">{newlyUnlockedBadge.icon}</span>
+              <span>
+                <strong>New Badge Unlocked:</strong> {newlyUnlockedBadge.name} — {newlyUnlockedBadge.description} (+XP)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={dismissBadgeNotification}
+              className="px-2.5 py-0.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-[11px] font-extrabold cursor-pointer transition-colors"
+            >
+              ✕ Dismiss
+            </button>
+          </div>
+        </aside>
+      )}
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Logo */}
         <Link
@@ -98,22 +126,31 @@ export const Navbar: React.FC = () => {
           </button>
         </nav>
 
-        {/* Right: User Status, Streak & Actions */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          {/* Daily Streak */}
+        {/* Right: Gamification Badges, User Status & Actions */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Daily Streak Counter */}
           <div
-            title={`Daily Streak: ${userProfile.dailyStreak} Days`}
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-bold"
+            title={`Daily Reading Streak: ${userProfile.dailyStreak} Days! Read every day to grow your flame.`}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-extrabold shadow-2xs hover:scale-105 transition-transform cursor-help"
           >
-            <span>🔥</span>
-            <span>{userProfile.dailyStreak} Days</span>
+            <span className="animate-pulse">🔥</span>
+            <span>{userProfile.dailyStreak}d</span>
+          </div>
+
+          {/* Experience Points (XP) Pill */}
+          <div
+            title={`Total Experience Points: ${userProfile.xp || 0} XP (+50 per story, +10 per word, +5 likes, +20 comments)`}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900/60 text-indigo-800 dark:text-indigo-300 text-xs font-extrabold shadow-2xs hover:scale-105 transition-transform cursor-help"
+          >
+            <span>⚡</span>
+            <span>{userProfile.xp || 0} XP</span>
           </div>
 
           {/* User CEFR Level Pill */}
           <button
             type="button"
             onClick={openLevelTestModal}
-            title="Click to test or recalibrate your level"
+            title="Click to test or recalibrate your CEFR level"
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -184,9 +221,9 @@ export const Navbar: React.FC = () => {
                 )}
               </button>
 
-              {/* User Dropdown */}
+              {/* User Dropdown with Gamification & Profile Status */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] shadow-xl p-3 z-40 animate-in fade-in duration-150">
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#1E1E1E] border border-[#E5E7EB] dark:border-[#2E2E2E] shadow-xl p-3 z-40 animate-in fade-in duration-150">
                   <div className="px-3 py-2 border-b border-[#E5E7EB] dark:border-[#2E2E2E] mb-2">
                     <p className="text-xs font-bold text-[#1F2937] dark:text-[#E5E7EB] truncate">
                       {userProfile.name}
@@ -194,6 +231,33 @@ export const Navbar: React.FC = () => {
                     <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] truncate">
                       {userProfile.email || user.email}
                     </p>
+                  </div>
+
+                  {/* Gamification Stats Banner in Dropdown */}
+                  <div className="p-2.5 rounded-xl bg-[#F7F4EE] dark:bg-[#252528] border border-[#E8E2D6] dark:border-[#2E2E2E] mb-2 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#1F2937] dark:text-[#E5E7EB]">
+                      <span>⚡ {userProfile.xp || 0} XP</span>
+                      <span>🔥 {userProfile.dailyStreak} Days</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                      <span>📖 {userProfile.storiesRead} read</span>
+                      <span>✨ {vocabulary.length} words</span>
+                    </div>
+
+                    {/* Unlocked Badges Preview */}
+                    {unlockedBadgeObjects.length > 0 && (
+                      <div className="pt-1.5 border-t border-[#E5E7EB] dark:border-[#2E2E2E] flex items-center gap-1.5 flex-wrap">
+                        {unlockedBadgeObjects.map((b) => (
+                          <span
+                            key={b!.id}
+                            title={`${b!.name}: ${b!.description}`}
+                            className="text-sm cursor-help hover:scale-125 transition-transform"
+                          >
+                            {b!.icon}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <Link

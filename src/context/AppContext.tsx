@@ -2,9 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
-import { UserProfile, VocabularyItem, CEFRLevel, WordToken } from "@/types";
+import { UserProfile, VocabularyItem, CEFRLevel, WordToken, UserBadge } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/auth-admin";
+import { BADGE_CATALOG, checkNewUnlockedBadges } from "@/lib/badges";
 
 const LEVEL_MAP: Record<CEFRLevel, number> = {
   A1: 1,
@@ -15,13 +16,24 @@ const LEVEL_MAP: Record<CEFRLevel, number> = {
   C2: 6,
 };
 
+const getTodayDateString = () => new Date().toISOString().split("T")[0];
+
+const getYesterdayDateString = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split("T")[0];
+};
+
 const DEFAULT_USER_PROFILE: UserProfile = {
   name: "Learner",
   level: "A2",
   levelNumber: 2,
   dailyStreak: 5,
+  lastActiveDate: getTodayDateString(),
   wordsLearned: 24,
   storiesRead: 3,
+  xp: 320,
+  unlockedBadges: ["first_story", "streak_flame"],
 };
 
 const INITIAL_VOCABULARY: VocabularyItem[] = [
@@ -83,10 +95,14 @@ interface AppContextType {
   signUpWithEmail: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null; user: User | null }>;
   signOut: () => Promise<void>;
 
-  // User Profile
+  // User Profile & Gamification
   userProfile: UserProfile;
   changeLevel: (newLevel: CEFRLevel) => void;
   incrementStoriesRead: () => void;
+  addXp: (amount: number, reason?: string) => void;
+  recordSocialAction: (action: "like" | "comment") => void;
+  newlyUnlockedBadge: UserBadge | null;
+  dismissBadgeNotification: () => void;
 
   // Vocabulary
   vocabulary: VocabularyItem[];
@@ -116,11 +132,53 @@ const LOCAL_STORAGE_KEYS = {
   THEME: "golingread_dark_mode",
 };
 
+/**
+ * Calculates current streak on active sessions
+ */
+function verifyStreak(profile: UserProfile): UserProfile {
+  const today = getTodayDateString();
+  const yesterday = getYesterdayDateString();
+  const lastActive = profile.lastActiveDate;
+
+  let streak = profile.dailyStreak || 1;
+
+  if (!lastActive) {
+    return { ...profile, lastActiveDate: today, dailyStreak: streak };
+  }
+
+  if (lastActive === today) {
+    // Already active today
+    return profile;
+  }
+
+  if (lastActive === yesterday) {
+    // Continued streak from yesterday
+    streak += 1;
+  } else {
+    // Streak broken, reset to 1
+    streak = 1;
+  }
+
+  return {
+    ...profile,
+    dailyStreak: streak,
+    lastActiveDate: today,
+  };
+}
+
 const getInitialProfile = (): UserProfile => {
   if (typeof window !== "undefined") {
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEYS.PROFILE);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return verifyStreak({
+          ...DEFAULT_USER_PROFILE,
+          ...parsed,
+          xp: parsed.xp ?? DEFAULT_USER_PROFILE.xp,
+          unlockedBadges: parsed.unlockedBadges ?? DEFAULT_USER_PROFILE.unlockedBadges,
+        });
+      }
     } catch {
       // ignore
     }
@@ -178,6 +236,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialTheme);
   const [isLevelTestModalOpen, setIsLevelTestModalOpen] = useState<boolean>(false);
 
+  // Gamification Badge Toast Notification
+  const [newlyUnlockedBadge, setNewlyUnlockedBadge] = useState<UserBadge | null>(null);
+
   const lastLoadedUserIdRef = useRef<string | null>(null);
 
   // Synchronize document dark class on theme changes
@@ -188,6 +249,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       document.documentElement.classList.remove("dark");
     }
   }, [isDarkMode]);
+
+  // Daily Streak check on provider mount
+  useEffect(() => {
+    setUserProfile((prev) => {
+      const updated = verifyStreak(prev);
+      if (updated.dailyStreak !== prev.dailyStreak || updated.lastActiveDate !== prev.lastActiveDate) {
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEYS.PROFILE, JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+      }
+      return updated;
+    });
+  }, []);
 
   // Cloud Database Sync: Load user profile & vocabulary from Supabase
   const loadUserDataFromSupabase = useCallback(async (activeUser: User) => {
@@ -201,7 +277,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (!profileErr && profileRow) {
         const level = (profileRow.level || profileRow.cefr_level || "A2") as CEFRLevel;
-        const profile: UserProfile = {
+        const rawProfile: UserProfile = {
           id: activeUser.id,
           name:
             profileRow.name ||
@@ -217,9 +293,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           level,
           levelNumber: LEVEL_MAP[level] || 2,
           dailyStreak: profileRow.daily_streak ?? 5,
-          wordsLearned: profileRow.words_learned ?? 0,
-          storiesRead: profileRow.stories_read ?? 0,
+          lastActiveDate: profileRow.last_active_date || getTodayDateString(),
+          wordsLearned: profileRow.words_learned ?? 24,
+          storiesRead: profileRow.stories_read ?? 3,
+          xp: profileRow.xp ?? 320,
+          unlockedBadges: profileRow.unlocked_badges ?? ["first_story", "streak_flame"],
         };
+
+        const profile = verifyStreak(rawProfile);
         setUserProfile(profile);
         try {
           localStorage.setItem(LOCAL_STORAGE_KEYS.PROFILE, JSON.stringify(profile));
@@ -241,17 +322,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           level: "A2",
           levelNumber: 2,
           dailyStreak: 5,
+          lastActiveDate: getTodayDateString(),
           wordsLearned: 24,
           storiesRead: 3,
+          xp: 320,
+          unlockedBadges: ["first_story", "streak_flame"],
         };
+
         await supabase.from("profiles").insert({
           id: activeUser.id,
           name: initialProfile.name,
           level: initialProfile.level,
           level_number: initialProfile.levelNumber,
           daily_streak: initialProfile.dailyStreak,
+          last_active_date: initialProfile.lastActiveDate,
           words_learned: initialProfile.wordsLearned,
           stories_read: initialProfile.storiesRead,
+          xp: initialProfile.xp,
+          unlocked_badges: initialProfile.unlockedBadges,
           avatar_url: initialProfile.avatarUrl || null,
         });
         setUserProfile(initialProfile);
@@ -386,7 +474,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUser(null);
       setSession(null);
       lastLoadedUserIdRef.current = null;
-      // Reset to guest defaults
       setUserProfile(DEFAULT_USER_PROFILE);
       setVocabulary(INITIAL_VOCABULARY);
       try {
@@ -399,6 +486,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // ignore
     }
   }, []);
+
+  // Gamification: Add Experience Points (XP) & Evaluate Badges
+  const addXp = useCallback(
+    (amount: number, _reason?: string) => {
+      setUserProfile((prev) => {
+        const nextXp = (prev.xp || 0) + amount;
+        const profileWithXp: UserProfile = {
+          ...prev,
+          xp: nextXp,
+        };
+
+        // Check for new badges
+        const newBadgeIds = checkNewUnlockedBadges(profileWithXp, vocabulary);
+        let updatedBadges = prev.unlockedBadges || [];
+
+        if (newBadgeIds.length > 0) {
+          updatedBadges = [...updatedBadges, ...newBadgeIds];
+          profileWithXp.unlockedBadges = updatedBadges;
+
+          const firstNewBadge = BADGE_CATALOG.find((b) => b.id === newBadgeIds[0]);
+          if (firstNewBadge) {
+            setNewlyUnlockedBadge(firstNewBadge);
+          }
+        }
+
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(LOCAL_STORAGE_KEYS.PROFILE, JSON.stringify(profileWithXp));
+          } catch {
+            // ignore
+          }
+        }
+
+        // Sync with Supabase if authenticated
+        if (user?.id) {
+          supabase
+            .from("profiles")
+            .update({
+              xp: nextXp,
+              unlocked_badges: updatedBadges,
+            })
+            .eq("id", user.id)
+            .then();
+        }
+
+        return profileWithXp;
+      });
+    },
+    [user, vocabulary]
+  );
+
+  const dismissBadgeNotification = useCallback(() => {
+    setNewlyUnlockedBadge(null);
+  }, []);
+
+  // Record social actions (+5 XP for like, +20 XP for comment)
+  const recordSocialAction = useCallback(
+    (action: "like" | "comment") => {
+      const xpReward = action === "like" ? 5 : 20;
+      addXp(xpReward, action === "like" ? "Liked a story" : "Posted a comment");
+    },
+    [addXp]
+  );
 
   // Change Level (Hybrid Local + Supabase)
   const changeLevel = useCallback((newLevel: CEFRLevel) => {
@@ -418,7 +568,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    // Cloud sync if user logged in
     if (user?.id) {
       supabase
         .from("profiles")
@@ -431,15 +580,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [user]);
 
-  // Increment Stories Read (Hybrid Local + Supabase)
+  // Increment Stories Read (+50 XP)
   const incrementStoriesRead = useCallback(() => {
     let nextCount = 1;
     setUserProfile((prev) => {
       nextCount = prev.storiesRead + 1;
-      const updated = {
+      const nextXp = (prev.xp || 0) + 50;
+      const updated: UserProfile = {
         ...prev,
         storiesRead: nextCount,
+        xp: nextXp,
       };
+
+      const newBadgeIds = checkNewUnlockedBadges(updated, vocabulary);
+      if (newBadgeIds.length > 0) {
+        updated.unlockedBadges = [...(updated.unlockedBadges || []), ...newBadgeIds];
+        const firstBadge = BADGE_CATALOG.find((b) => b.id === newBadgeIds[0]);
+        if (firstBadge) setNewlyUnlockedBadge(firstBadge);
+      }
+
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem(LOCAL_STORAGE_KEYS.PROFILE, JSON.stringify(updated));
@@ -450,19 +609,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    // Cloud sync if user logged in
     if (user?.id) {
       supabase
         .from("profiles")
         .update({
           stories_read: nextCount,
+          xp: (userProfile.xp || 0) + 50,
+          unlocked_badges: userProfile.unlockedBadges,
         })
         .eq("id", user.id)
         .then();
     }
-  }, [user]);
+  }, [user, vocabulary, userProfile.xp, userProfile.unlockedBadges]);
 
-  // Toggle Save Word (Hybrid Local + Supabase)
+  // Toggle Save Word (+10 XP on save)
   const toggleSaveWord = useCallback((token: WordToken, storyTitle: string = "Reading") => {
     let isRemoving = false;
     let addedItem: VocabularyItem | null = null;
@@ -503,7 +663,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    // Cloud sync if user logged in
+    // Reward XP on saving word
+    if (!isRemoving) {
+      addXp(10, "Saved a word");
+    }
+
     if (user?.id) {
       if (isRemoving) {
         supabase
@@ -533,9 +697,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           .then();
       }
     }
-  }, [user]);
+  }, [user, addXp]);
 
-  // Update Vocab Status (Hybrid Local + Supabase)
+  // Update Vocab Status
   const updateVocabStatus = useCallback((id: string, status: "learning" | "mastered") => {
     setVocabulary((prev) => {
       const updated = prev.map((item) => (item.id === id ? { ...item, status } : item));
@@ -549,7 +713,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    // Cloud sync if user logged in
     if (user?.id) {
       supabase
         .from("user_vocabulary")
@@ -560,7 +723,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [user]);
 
-  // Remove Word (Hybrid Local + Supabase)
+  // Remove Word
   const removeVocabWord = useCallback((id: string) => {
     setVocabulary((prev) => {
       const updated = prev.filter((item) => item.id !== id);
@@ -574,7 +737,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    // Cloud sync if user logged in
     if (user?.id) {
       supabase
         .from("user_vocabulary")
@@ -625,7 +787,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const openLevelTestModal = useCallback(() => setIsLevelTestModalOpen(true), []);
   const closeLevelTestModal = useCallback(() => setIsLevelTestModalOpen(false), []);
 
-  // Compute Admin Status based on verified email whitelist
+  // Compute Admin Status
   const isAdmin = useMemo(() => {
     return isAdminEmail(user?.email || userProfile.email);
   }, [user?.email, userProfile.email]);
@@ -653,6 +815,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userProfile,
       changeLevel,
       incrementStoriesRead,
+      addXp,
+      recordSocialAction,
+      newlyUnlockedBadge,
+      dismissBadgeNotification,
       vocabulary,
       savedWordsMap,
       toggleSaveWord,
@@ -681,6 +847,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userProfile,
       changeLevel,
       incrementStoriesRead,
+      addXp,
+      recordSocialAction,
+      newlyUnlockedBadge,
+      dismissBadgeNotification,
       vocabulary,
       savedWordsMap,
       toggleSaveWord,

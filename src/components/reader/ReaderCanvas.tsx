@@ -6,6 +6,7 @@ import { Story, WordToken, ReadingTheme, LineHeight } from "@/types";
 import { ReaderToolbar } from "./ReaderToolbar";
 import { WordPopover } from "./WordPopover";
 import { StoryQuiz } from "./StoryQuiz";
+import { StoryEngagement } from "./StoryEngagement";
 import { SponsorSidebar } from "./SponsorSidebar";
 
 interface ReaderCanvasProps {
@@ -267,6 +268,13 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
             <StoryQuiz
               quizQuestions={story.quiz}
               onCompleteStory={onCompleteStory}
+              readingTheme={readingTheme}
+            />
+
+            {/* Social Engagement Layer: Likes & Comments */}
+            <StoryEngagement
+              storySlug={story.slug}
+              storyTitle={story.title}
               readingTheme={readingTheme}
             />
           </div>

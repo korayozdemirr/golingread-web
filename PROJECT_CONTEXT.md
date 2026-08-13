@@ -1,6 +1,6 @@
 # 📚 GoLingread - Project Context & Architecture Memory
 
-> **Version:** 0.5.0  
+> **Version:** 0.6.0  
 > **Last Updated:** August 2026  
 > **Repository:** `golingread-web`
 
@@ -92,9 +92,10 @@ The core thesis is that natural language acquisition happens effortlessly when l
 15. **Standalone Vocabulary Hub ([page.tsx](file:///Users/korayozdemir/golingread-web/src/app/vocabulary/page.tsx)):**
     - 3D flip card review session with spaced-repetition ratings (*Again*, *Good*, *Mastered*), statistics banner, search filter, and vocabulary management table.
 16. **Diagnostic Level Test ([LevelTestModal.tsx](file:///Users/korayozdemir/golingread-web/src/components/level-test/LevelTestModal.tsx)):**
-    - 5-question CEFR level assessment that calibrates the user profile and updates match scores across all views.
-17. **Comprehension Quiz & Sponsorship ([StoryQuiz.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryQuiz.tsx), [SponsorSidebar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/SponsorSidebar.tsx)):**
-    - End-of-story comprehension checks and non-intrusive editorial premium sponsorship blocks.
+18. **Gamification & Daily Streak Engine ([AppContext.tsx](file:///Users/korayozdemir/golingread-web/src/context/AppContext.tsx), [badges.ts](file:///Users/korayozdemir/golingread-web/src/lib/badges.ts), [Navbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/layout/Navbar.tsx)):**
+    - Daily streak verification (🔥 continuous active day calculation), XP rewards (+50 per story completed, +10 per word saved, +5 per story liked, +20 per comment posted), milestone badge evaluation, and celebration toasts.
+19. **Story Social Interaction Layer ([StoryEngagement.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryEngagement.tsx), [engagement.ts](file:///Users/korayozdemir/golingread-web/src/lib/engagement.ts)):**
+    - Story likes toggle with live counter, community reader comments discussion with CEFR level tags, and frictionless guest AuthModal sign-in prompts.
 
 ---
 
@@ -133,6 +134,10 @@ The core thesis is that natural language acquisition happens effortlessly when l
 11. **Story Length & Paragraph Scaling Enforcement (100w to 500w):**
     - *Problem:* When requesting 400-word stories, Gemini defaulted to producing brief 3-paragraph summaries (80-85 words total) due to fixed paragraph instructions and low output token limits (2500 tokens).
     - *Solution:* Implemented dynamic paragraph scaling (`targetParagraphs = wordCount / 65`), explicit sentence/paragraph length constraints in the Gemini prompt, increased `maxOutputTokens` to 8192, expanded the UI slider up to 500 words, and updated the fallback generator to produce 5-6 rich narrative paragraphs for long stories.
+12. **Gamification (Streak, XP, Badges) & Social Engagement Layer:**
+    - *Problem:* Readers lacked motivational incentives for continuous daily habit formation and community engagement under stories.
+    - *Solution:* Implemented a daily streak engine (🔥), XP progression system (⚡ +50 story, +10 word, +5 like, +20 comment), milestone badge unlocks (🏆), animated story likes (❤️), and paper-theme responsive community discussion threads with guest auth prompts.
+
 
 
 

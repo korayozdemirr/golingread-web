@@ -64,6 +64,15 @@ export interface VocabularyItem {
   easeFactor: number;
 }
 
+export interface UserBadge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: "reading" | "vocabulary" | "streak" | "social";
+  unlockedAt?: string;
+}
+
 export interface UserProfile {
   id?: string;
   name: string;
@@ -72,6 +81,29 @@ export interface UserProfile {
   level: CEFRLevel;
   levelNumber: number; // 1 to 5
   dailyStreak: number;
+  lastActiveDate?: string;
   wordsLearned: number;
   storiesRead: number;
+  xp: number;
+  unlockedBadges: string[];
 }
+
+export interface StoryLike {
+  id?: string;
+  storySlug: string;
+  userId?: string;
+  createdAt: string;
+}
+
+export interface StoryComment {
+  id: string;
+  storySlug: string;
+  userId?: string;
+  userName: string;
+  userAvatar?: string;
+  userLevel?: CEFRLevel;
+  content: string;
+  createdAt: string;
+  likesCount?: number;
+}
+
