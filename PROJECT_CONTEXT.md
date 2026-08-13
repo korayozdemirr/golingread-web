@@ -130,6 +130,10 @@ The core thesis is that natural language acquisition happens effortlessly when l
 10. **Contextual Word Token Mapping & Adaptive Thematic Story Synthesis:**
     - *Problem:* AI stories previously lacked word-level contextual translations (only full paragraphs were translated), causing words outside the hardcoded dictionary to lack Turkish meanings. Additionally, fallback templates produced grammatically awkward sentences for non-travel prompts.
     - *Solution:* Engineered a compact `"words": { "word": "Turkish translation" }` JSON protocol where Gemini returns contextual Turkish meanings for every word in 1.5 seconds. Rebuilt fallback engine into an intelligent thematic narrative generator covering Cooking, Mystery, Travel, and Daily Life, and expanded `EN_TR_LEXICON` with hundreds of core nouns, verbs, and adjectives.
+11. **Story Length & Paragraph Scaling Enforcement (100w to 500w):**
+    - *Problem:* When requesting 400-word stories, Gemini defaulted to producing brief 3-paragraph summaries (80-85 words total) due to fixed paragraph instructions and low output token limits (2500 tokens).
+    - *Solution:* Implemented dynamic paragraph scaling (`targetParagraphs = wordCount / 65`), explicit sentence/paragraph length constraints in the Gemini prompt, increased `maxOutputTokens` to 8192, expanded the UI slider up to 500 words, and updated the fallback generator to produce 5-6 rich narrative paragraphs for long stories.
+
 
 
 

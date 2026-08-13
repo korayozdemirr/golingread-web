@@ -74,181 +74,145 @@ interface FallbackNarrative {
 /**
  * Intelligent theme-aware procedural story generator for offline / fallback scenarios
  */
-function buildAdaptiveFallbackStory(topic: string, level: CEFRLevel, category: StoryCategory): FallbackNarrative {
+/**
+ * Intelligent theme-aware procedural story generator for offline / fallback scenarios
+ */
+function buildAdaptiveFallbackStory(topic: string, level: CEFRLevel, category: StoryCategory, targetWordCount: number = 180): FallbackNarrative {
   const lower = topic.toLowerCase();
+  const isExtended = targetWordCount >= 280;
 
   // 1. Food / Cooking Theme
   if (lower.includes("cook") || lower.includes("chef") || lower.includes("kitchen") || lower.includes("food") || lower.includes("restaurant") || lower.includes("soup") || lower.includes("bread") || lower.includes("tea") || lower.includes("coffee")) {
+    const paragraphs: FallbackParagraph[] = [
+      {
+        text: "Every morning, the quiet kitchen smelled of fresh bread and warm spices. Leo loved preparing simple meals using garden vegetables and olive oil for his neighbors. He always believed that good food brings people closer together.",
+        turkishTranslation: "Her sabah, sessiz mutfak taze ekmek ve ılık baharat kokardı. Leo, komşuları için bahçe sebzeleri ve zeytinyağı kullanarak basit yemekler hazırlamayı çok severdi. İyi yemeğin insanları birbirine yakınlaştırdığına her zaman inanırdı.",
+        words: { Every: "Her", morning: "sabah", quiet: "sessiz", kitchen: "mutfak", smelled: "kokardı", fresh: "taze", bread: "ekmek", warm: "ılık", spices: "baharatlar", loved: "severdi", preparing: "hazırlamayı", simple: "basit", meals: "yemekler", using: "kullanarak", garden: "bahçe", vegetables: "sebzeler", olive: "zeytin", oil: "yağ", neighbors: "komşular", believed: "inandı", food: "yemek", brings: "getirir", people: "insanlar", closer: "daha yakın", together: "birlikte" },
+      },
+      {
+        text: "One rainy afternoon, while cleaning the wooden pantry shelves, he noticed a small bronze box hidden behind old tea jars. Inside lay a handwritten notebook filled with antique recipes and heartwarming cooking advice from his grandmother.",
+        turkishTranslation: "Yağmurlu bir öğleden sonra, ahşap kiler raflarını temizlerken eski çay kavanozlarının arkasına gizlenmiş küçük bronz bir kutu fark etti. İçinde büyükannesinden kalma antika tarifler ve iç ısıtan yemek pişirme tavsiyeleriyle dolu el yazması bir defter vardı.",
+        words: { rainy: "yağmurlu", afternoon: "öğleden sonra", cleaning: "temizlerken", wooden: "ahşap", pantry: "kiler", shelves: "raflar", noticed: "fark etti", bronze: "bronz", box: "kutu", hidden: "gizli", behind: "arkasında", jars: "kavanozlar", Inside: "içeride", handwritten: "el yazısı", notebook: "defter", filled: "dolu", antique: "antika", recipes: "tarifler", advice: "tavsiye", grandmother: "büyükanne" },
+      },
+      {
+        text: "He decided to cook the legendary autumn vegetable soup described in the old pages. He carefully chopped fresh carrots, sweet onions, and fragrant herbs, letting the soup simmer gently over low heat for several hours.",
+        turkishTranslation: "Eski sayfalarda tarif edilen efsanevi sonbahar sebze çorbasını pişirmeye karar verdi. Taze havuçları, tatlı soğanları ve mis kokulu otları özenle doğrayarak çorbanın kısık ateşte birkaç saat usulca kaynamasına izin verdi.",
+        words: { decided: "karar verdi", cook: "pişirmek", legendary: "efsanevi", autumn: "sonbahar", vegetable: "sebze", soup: "çorba", described: "tarif edilen", pages: "sayfalar", carefully: "özenle", chopped: "doğradı", carrots: "havuçlar", sweet: "tatlı", onions: "soğanlar", fragrant: "mis kokulu", herbs: "otlar / baharatlar", simmer: "kısık ateşte kaynamak", gently: "usulca", hours: "saatler" },
+      },
+    ];
+
+    if (isExtended) {
+      paragraphs.push(
+        {
+          text: "The delicious aroma spread through the cobblestone alleyways, inviting travelers, teachers, and shopkeepers to gather near the kitchen window. Everyone sat around the long wooden table, sharing warm conversations and tasting the hearty soup.",
+          turkishTranslation: "Lezzetli koku arnavut kaldırımlı sokaklara yayılarak gezginleri, öğretmenleri ve dükkan sahiplerini mutfak penceresinin yanında toplanmaya davet etti. Herkes uzun ahşap masanın etrafına oturdu, sıcak sohbetler paylaştı ve doyurucu çorbayı tattı.",
+          words: { aroma: "koku", spread: "yayıldı", cobblestone: "arnavut kaldırımı", alleyways: "dar sokaklar", inviting: "davet eden", shopkeepers: "dükkan sahipleri", gather: "toplanmak", window: "pencere", table: "masa", sharing: "paylaşarak", conversations: "sohbetler", tasting: "tadarak", hearty: "doyurucu / besleyici" },
+        },
+        {
+          text: "By evening, the empty bowls and smiling faces proved that true happiness comes from simple generosity. Leo placed the recipe notebook safely on the front counter, ready for tomorrow's delicious adventures.",
+          turkishTranslation: "Akşama doğru boş kasedeler ve gülümseyen yüzler gerçek mutluluğun samimi cömertlikten geldiğini kanıtladı. Leo tarif defterini yarının lezzetli maceralarına hazır halde ön tezgahın üzerine güvenle yerleştirdi.",
+          words: { evening: "akşam", empty: "boş", bowls: "kaseler", smiling: "gülümseyen", faces: "yüzler", happiness: "mutluluk", generosity: "cömertlik", placed: "yerleştirdi", counter: "tezgah", ready: "hazır", tomorrow: "yarın", adventures: "maceralar" },
+        }
+      );
+    } else {
+      paragraphs.push({
+        text: "When he served the delicious hot soup to the townspeople, everyone smiled with joy. Leo realized that true cooking is not only about ingredients, but about sharing love and patience.",
+        turkishTranslation: "Kasaba halkına lezzetli sıcak çorbayı sunduğunda herkes sevinçle gülümsedi. Leo gerçek aşçılığın sadece malzemelerle değil, sevgi ve sabrı paylaşmakla ilgili olduğunu anladı.",
+        words: { served: "sundu", delicious: "lezzetli", hot: "sıcak", soup: "çorba", townspeople: "kasaba halkı", everyone: "herkes", smiled: "gülümsedi", joy: "sevinç", realized: "fark etti", true: "gerçek", ingredients: "malzemeler", sharing: "paylaşma", love: "sevgi", patience: "sabır" },
+      });
+    }
+
     return {
       title: "The Secret Recipe in the Old Kitchen",
       titleTr: "Eski Mutfaktaki Gizli Tarif",
       summary: "A passionate cook discovers an ancient handwritten recipe book filled with heartwarming dishes.",
       summaryTr: "Tutkulu bir aşçı, içi iç ısıtan yemeklerle dolu el yazması kadim bir tarif kitabı keşfeder.",
-      paragraphs: [
-        {
-          text: "Every morning, the quiet kitchen smelled of fresh bread and warm spices. Leo loved preparing simple meals using garden vegetables and olive oil for his neighbors.",
-          turkishTranslation: "Her sabah, sessiz mutfak taze ekmek ve ılık baharat kokardı. Leo, komşuları için bahçe sebzeleri ve zeytinyağı kullanarak basit yemekler hazırlamayı çok severdi.",
-          words: { Every: "Her", morning: "sabah", quiet: "sessiz", kitchen: "mutfak", smelled: "kokardı", fresh: "taze", bread: "ekmek", warm: "ılık", spices: "baharatlar", loved: "severdi", preparing: "hazırlamayı", simple: "basit", meals: "yemekler", using: "kullanarak", garden: "bahçe", vegetables: "sebzeler", olive: "zeytin", oil: "yağ", neighbors: "komşular" },
-        },
-        {
-          text: "One rainy afternoon, he found a small wooden box behind the pantry shelf. Inside lay an old notebook filled with golden notes about cooking with patience and kindness.",
-          turkishTranslation: "Yağmurlu bir öğleden sonra, kiler rafının arkasında küçük ahşap bir kutu buldu. İçinde sabır ve nezaketle yemek pişirmeye dair altın notlarla dolu eski bir defter vardı.",
-          words: { rainy: "yağmurlu", afternoon: "öğleden sonra", found: "buldu", small: "küçük", wooden: "ahşap", box: "kutu", behind: "arkasında", shelf: "raf", Inside: "içeride", notebook: "defter", filled: "dolu", golden: "altın", notes: "notlar", cooking: "yemek pişirme", patience: "sabır", kindness: "nezaket" },
-        },
-        {
-          text: "When he served the delicious hot soup to the townspeople, everyone smiled with joy. Leo realized that true cooking is not only about ingredients, but about sharing love.",
-          turkishTranslation: "Kasaba halkına lezzetli sıcak çorbayı sunduğunda herkes sevinçle gülümsedi. Leo gerçek aşçılığın sadece malzemelerle değil, sevgiyi paylaşmakla ilgili olduğunu anladı.",
-          words: { served: "sundu / ikram etti", delicious: "lezzetli", hot: "sıcak", soup: "çorba", townspeople: "kasaba halkı", everyone: "herkes", smiled: "gülümsedi", joy: "sevinç", realized: "fark etti", true: "gerçek", ingredients: "malzemeler", sharing: "paylaşma", love: "sevgi" },
-        },
-      ],
+      paragraphs,
       quiz: [
         {
           id: "q-1",
           question: "What did Leo find behind the pantry shelf?",
-          options: ["A wooden box with an old recipe notebook", "A bag of gold coins", "A broken clock", "A strange key"],
+          options: ["A bronze box with an antique recipe notebook", "A bag of gold coins", "A broken clock", "A strange key"],
           correctIndex: 0,
-          explanation: "Leo found a small wooden box containing an old notebook with cooking notes.",
+          explanation: "Leo found a small bronze box containing an antique recipe notebook.",
         },
         {
           id: "q-2",
           question: "What did Leo learn about true cooking?",
-          options: ["It requires expensive tools", "It is about sharing love and patience", "It should be done quickly", "It is very difficult"],
+          options: ["It requires expensive tools", "It is about sharing love, patience and generosity", "It should be done quickly", "It is very difficult"],
           correctIndex: 1,
-          explanation: "Leo realized true cooking is about sharing love and patience with others.",
+          explanation: "Leo realized true cooking is about sharing love, patience and generosity with others.",
         },
       ],
     };
   }
 
-  // 2. Travel & Airport Theme
-  if (lower.includes("airport") || lower.includes("flight") || lower.includes("plane") || lower.includes("travel") || lower.includes("journey") || lower.includes("train") || lower.includes("station") || lower.includes("city")) {
-    return {
-      title: "The Traveler and the Morning Flight",
-      titleTr: "Gezgin ve Sabah Uçuşu",
-      summary: "A curious traveler arrives at a busy airport terminal ready for a journey of discovery.",
-      summaryTr: "Meraklı bir gezgin, keşif dolu bir yolculuğa hazır halde kalabalık bir havalimanı terminaline varır.",
-      paragraphs: [
-        {
-          text: "Early in the morning, the wide airport terminal woke up with bright lights and gentle music. Passengers held their tickets and waited patiently near the departure gate.",
-          turkishTranslation: "Sabahın erken saatlerinde, geniş havalimanı terminali parlak ışıklar ve hafif bir müzikle uyandı. Yolcular biletlerini tuttu ve kalkış kapısının yanında sabırla beklediler.",
-          words: { Early: "Erkenden", morning: "sabah", wide: "geniş", airport: "havalimanı", terminal: "terminal", bright: "parlak", lights: "ışıklar", gentle: "hafif / nazik", music: "müzik", Passengers: "Yolcular", held: "tuttu", tickets: "biletler", waited: "bekledi", departure: "kalkış", gate: "kapı" },
-        },
-        {
-          text: "When the airplane arrived at the runway, the pilot announced that boarding was ready. Looking through the clean window, the traveler saw the rising sun over the clouds.",
-          turkishTranslation: "Uçak piste yanaştığında pilot uçağa binişin hazır olduğunu duyurdu. Temiz pencereden bakan gezgin, bulutların üzerindeki doğan güneşi gördü.",
-          words: { airplane: "uçak", arrived: "vardı", runway: "pist", pilot: "pilot", announced: "duyurdu", boarding: "biniş", ready: "hazır", window: "pencere", traveler: "gezgin", rising: "doğan", sun: "güneş", clouds: "bulutlar" },
-        },
-        {
-          text: "By evening, the plane landed safely in a new city. Walking down the stone streets with a happy heart, the traveler knew that every destination brings unforgettable memories.",
-          turkishTranslation: "Akşama doğru uçak yeni bir şehre güvenle indi. Mutlu bir kalple taş sokaklarda yürürken, gezgin her varış noktasının unutulmaz anılar getirdiğini biliyordu.",
-          words: { evening: "akşam", plane: "uçak", landed: "indi", safely: "güvenle", city: "şehir", Walking: "yürüyerek", streets: "sokaklar", happy: "mutlu", heart: "kalp", destination: "varış noktası", unforgettable: "unutulmaz", memories: "anılar" },
-        },
-      ],
-      quiz: [
-        {
-          id: "q-1",
-          question: "Where were the passengers waiting in the morning?",
-          options: ["Near the departure gate", "In a train station", "Outside on the street", "At a coffee shop"],
-          correctIndex: 0,
-          explanation: "The passengers waited near the departure gate for the boarding announcement.",
-        },
-        {
-          id: "q-2",
-          question: "What did the traveler see through the window?",
-          options: ["Rainstorm", "The rising sun over the clouds", "A dark forest", "A tall mountain"],
-          correctIndex: 1,
-          explanation: "The traveler saw the rising sun over the clouds through the clean window.",
-        },
-      ],
-    };
-  }
-
-  // 3. Mystery & Detective Theme
-  if (lower.includes("detective") || lower.includes("mystery") || lower.includes("secret") || lower.includes("lost") || lower.includes("clock") || lower.includes("key") || lower.includes("door") || lower.includes("room")) {
-    return {
-      title: "The Mystery of the Hidden Key",
-      titleTr: "Gizli Anahtarın Sırrı",
-      summary: "A quiet apprentice discovers an antique locked chest with clues leading across the old town.",
-      summaryTr: "Sakin bir çırak, eski kasabanın dört bir yanına uzanan ipuçlarıyla kilitli antika bir sandık keşfeder.",
-      paragraphs: [
-        {
-          text: "In the quiet corner of an old antique shop, Leo discovered a small bronze key hidden beneath an ancient wooden clock. The key had strange letters carved into its smooth surface.",
-          turkishTranslation: "Eski bir antika dükkanının sessiz köşesinde Leo, kadim bir ahşap saatin altına gizlenmiş küçük bronz bir anahtar keşfetti. Anahtarın pürüzsüz yüzeyine garip harfler kazınmıştı.",
-          words: { quiet: "sessiz", corner: "köşe", antique: "antika", shop: "dükkan", discovered: "keşfetti", small: "küçük", bronze: "bronz", key: "anahtar", hidden: "gizli / saklanmış", clock: "saat", strange: "garip", letters: "harfler", surface: "yüzey" },
-        },
-        {
-          text: "He carefully followed the clues written in an old diary found inside the workshop desk. Each step led him through narrow stone paths toward the historical library tower.",
-          turkishTranslation: "Atölye masasının içinde bulunan eski bir günlükte yazılı ipuçlarını dikkatle takip etti. Her adım onu dar taş yollardan tarihi kütüphane kulesine doğru yönlendirdi.",
-          words: { carefully: "dikkatle", followed: "takip etti", clues: "ipuçları", diary: "günlük", workshop: "atölye", desk: "çalışma masası", narrow: "dar", paths: "patikalar / yollar", library: "kütüphane", tower: "kule" },
-        },
-        {
-          text: "When he opened the iron door at the top of the tower, soft sunlight revealed a collection of forgotten maps and peaceful paintings of the ancient world.",
-          turkishTranslation: "Kulenin tepesindeki demir kapıyı açtığında, yumuşak güneş ışığı antik dünyanın unutulmuş haritaları ve huzurlu tablolarından oluşan bir koleksiyonu aydınlattı.",
-          words: { opened: "açtı", iron: "demir", door: "kapı", tower: "kule", sunlight: "güneş ışığı", revealed: "ortaya çıkardı", maps: "haritalar", paintings: "tablolar", ancient: "antik / kadim", world: "dünya" },
-        },
-      ],
-      quiz: [
-        {
-          id: "q-1",
-          question: "Where did Leo find the bronze key?",
-          options: ["Beneath an ancient wooden clock", "In a river", "Under his bed", "At the train station"],
-          correctIndex: 0,
-          explanation: "Leo found the small bronze key beneath an ancient wooden clock in the antique shop.",
-        },
-        {
-          id: "q-2",
-          question: "What was discovered behind the iron door?",
-          options: ["Gold coins", "Forgotten maps and paintings", "A locked box", "An empty room"],
-          correctIndex: 1,
-          explanation: "Opening the iron door revealed forgotten maps and peaceful paintings of the ancient world.",
-        },
-      ],
-    };
-  }
-
-  // 4. Default Coherent Narrative (Adaptive to Topic)
+  // 2. Default & Adaptive Narrative
   const cleanTitle = topic
     .split(" ")
     .slice(0, 5)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
+  const baseParagraphs: FallbackParagraph[] = [
+    {
+      text: `In a peaceful historical town surrounded by gentle green hills, a curious person began an exciting new chapter. When ${topic.toLowerCase()} became the center of daily conversations, neighbors and travelers gathered near the town square to listen with keen interest.`,
+      turkishTranslation: `Yeşil tepelerle çevrili huzurlu tarihi bir kasabada, meraklı bir kişi heyecan verici yeni bir döneme başladı. ${topic} günlük sohbetlerin merkezine oturduğunda, komşular ve gezginler büyük bir ilgiyle dinlemek için kasaba meydanında toplandılar.`,
+      words: { peaceful: "huzurlu", historical: "tarihi", town: "kasaba", surrounded: "çevrili", hills: "tepeler", curious: "meraklı", exciting: "heyecan verici", center: "merkez", conversations: "sohbetler", neighbors: "komşular", travelers: "gezginler", gathered: "toplandı", square: "meydan", interest: "ilgi" },
+    },
+    {
+      text: `As the morning hours passed gently, soft sunlight guided the travelers along the ancient stone pathways. Walking through the lively market, friendly shopkeepers shared helpful tips, warm smiles, and encouraging stories about past discoveries.`,
+      turkishTranslation: `Sabah saatleri usulca geçerken, yumuşak güneş ışığı kadim taş patikalar boyunca yolculara rehberlik etti. Hareketli pazarda yürürken, dost canlısı dükkan sahipleri faydalı ipuçları, sıcak gülümsemeler ve geçmiş keşiflere dair cesaret verici hikayeler paylaştılar.`,
+      words: { morning: "sabah", hours: "saatler", passed: "geçti", gently: "usulca", sunlight: "güneş ışığı", guided: "rehberlik etti", ancient: "kadim / antik", pathways: "yollar", lively: "hareketli / canlı", market: "pazar", shopkeepers: "dükkan sahipleri", helpful: "faydalı", tips: "ipuçları", smiles: "gülümsemeler", stories: "hikayeler", discoveries: "keşifler" },
+    },
+    {
+      text: `Every step forward revealed new details about the town's rich heritage and creative spirit. People from different backgrounds worked together, exchanging ideas and building strong bonds of friendship through mutual cooperation.`,
+      turkishTranslation: `İleriye atılan her adım, kasabanın zengin mirası ve yaratıcı ruhu hakkında yeni ayrıntılar ortaya çıkardı. Farklı geçmişlere sahip insanlar karşılıklı işbirliği yoluyla fikir alışverişinde bulunarak ve güçlü dostluk bağları kurarak birlikte çalıştılar.`,
+      words: { step: "adım", forward: "ileri", revealed: "ortaya çıkardı", details: "ayrıntılar", heritage: "miras", creative: "yaratıcı", spirit: "ruh", backgrounds: "geçmişler", worked: "çalıştı", exchanging: "alışverişinde bulunarak", ideas: "fikirler", bonds: "bağlar", friendship: "dostluk", mutual: "karşılıklı", cooperation: "işbirliği" },
+    },
+  ];
+
+  if (isExtended) {
+    baseParagraphs.push(
+      {
+        text: `Later in the afternoon, they reached the old observatory located at the top of the hill. From this quiet viewpoint, the entire valley looked magnificent under the golden afternoon sky, showing the true harmony between nature and human endeavor.`,
+        turkishTranslation: `Öğleden sonra tepenin zirvesinde bulunan eski gözlemevine ulaştılar. Bu sessiz bakış açısından tüm vadi, doğa ile insan emeği arasındaki gerçek uyumu sergileyerek altın sarısı öğleden sonra göğü altında muhteşem görünüyordu.`,
+        words: { afternoon: "öğleden sonra", reached: "ulaştı", observatory: "gözlemevi", located: "bulunan", hill: "tepe", viewpoint: "bakış noktası", valley: "vadi", magnificent: "muhteşem", golden: "altın sarısı", harmony: "uyum", nature: "doğa", endeavor: "çaba / emek" },
+      },
+      {
+        text: `By sunset, the memorable journey concluded with a sense of wonder and lasting gratitude. Looking back across the open horizon, everyone understood that learning and exploring with an open heart transforms ordinary moments into extraordinary wisdom.`,
+        turkishTranslation: `Gün batımına doğru, unutulmaz yolculuk bir hayret duygusu ve kalıcı bir minnettarlıkla sona erdi. Uçsuz bucaksız ufka dönüp bakıldığında, açık bir kalple öğrenmenin ve keşfetmenin sıradan anları olağanüstü bir bilgeliğe dönüştürdüğünü herkes anladı.`,
+        words: { sunset: "gün batımı", memorable: "unutulmaz", journey: "yolculuk", concluded: "sona erdi", wonder: "hayret", gratitude: "minnettarlık", horizon: "ufuk", understood: "anladı", exploring: "keşfetmek", transforms: "dönüştürür", moments: "anlar", extraordinary: "olağanüstü", wisdom: "bilgelik" },
+      }
+    );
+  } else {
+    baseParagraphs.push({
+      text: `By sunset, the journey brought deep understanding and happiness. Looking back at the open road, it was clear that every great discovery begins with a single curious step and the courage to explore.`,
+      turkishTranslation: `Gün batımına doğru yolculuk derin bir anlayış ve mutluluk getirdi. Açık yola dönüp bakıldığında, her büyük keşfin tek bir meraklı adımla ve keşfetme cesaretiyle başladığı açıktı.`,
+      words: { sunset: "gün batımı", journey: "yolculuk", understanding: "anlayış", happiness: "mutluluk", discovery: "keşif", single: "tek bir", step: "adım", courage: "cesaret", explore: "keşfetmek" },
+    });
+  }
+
   return {
     title: cleanTitle || `The Secrets of ${category}`,
     titleTr: `${cleanTitle || category} Yolculuğu`,
     summary: `An inspiring ${category.toLowerCase()} narrative exploring ${topic} with graded CEFR ${level} language.`,
     summaryTr: `${topic} konusunu ${level} seviyesine uygun duru bir dille ele alan etkileyici bir ${category.toLowerCase()} hikayesi.`,
-    paragraphs: [
-      {
-        text: `In a peaceful town surrounded by green hills, a curious person began an exciting new chapter. When ${topic.toLowerCase()} became the center of daily conversations, everyone gathered to listen with wonder.`,
-        turkishTranslation: `Yeşil tepelerle çevrili huzurlu bir kasabada, meraklı bir kişi heyecan verici yeni bir döneme başladı. ${topic} günlük sohbetlerin merkezine oturduğunda, herkes merakla dinlemek için toplandı.`,
-        words: { peaceful: "huzurlu", town: "kasaba", surrounded: "çevrili", hills: "tepeler", curious: "meraklı", exciting: "heyecan verici", center: "merkez", conversations: "sohbetler", gathered: "toplandı", wonder: "hayret / merak" },
-      },
-      {
-        text: `As the days passed gently, soft light guided the travelers along the stone pathway. Walking through the colorful market, friendly neighbors shared warm smiles and encouraging words.`,
-        turkishTranslation: `Günler usulca geçerken, yumuşak ışık taş yol boyunca yolculara rehberlik etti. Renkli pazarda yürürken, dost canlısı komşular sıcak gülümsemeler ve cesaret verici sözler paylaştılar.`,
-        words: { passed: "geçti", gently: "usulca / nazikçe", guided: "rehberlik etti", pathway: "yol", market: "pazar", neighbors: "komşular", smiles: "gülümsemeler", encouraging: "cesaret verici" },
-      },
-      {
-        text: `By sunset, the journey brought deep understanding and happiness. Looking back at the open road, it was clear that every great discovery begins with a single curious step.`,
-        turkishTranslation: `Gün batımına doğru yolculuk derin bir anlayış ve mutluluk getirdi. Açık yola dönüp bakıldığında, her büyük keşfin tek bir meraklı adımla başladığı açıktı.`,
-        words: { sunset: "gün batımı", journey: "yolculuk", understanding: "anlayış", happiness: "mutluluk", discovery: "keşif", single: "tek bir", step: "adım" },
-      },
-    ],
+    paragraphs: baseParagraphs,
     quiz: [
       {
         id: "q-1",
-        question: "How did the neighbors react in the market?",
-        options: ["They shared warm smiles and encouraging words", "They were angry", "They closed all the doors", "Nobody spoke"],
+        question: "Where did the people gather to discuss the news?",
+        options: ["Near the town square", "Inside a dark cave", "At an airport gate", "Behind closed doors"],
         correctIndex: 0,
-        explanation: "The story states that friendly neighbors shared warm smiles and encouraging words in the colorful market.",
+        explanation: "The story mentions people gathered near the town square with keen interest.",
       },
       {
         id: "q-2",
         question: "What conclusion was reached by sunset?",
-        options: ["The journey was too long", "Every great discovery begins with a single curious step", "The town was forgotten", "It started raining"],
+        options: ["The journey was a mistake", "Great discoveries begin with curiosity and courage", "Everyone should leave the town", "It was too cold to stay outside"],
         correctIndex: 1,
-        explanation: "The story concludes that every great discovery begins with a single curious step.",
+        explanation: "The story concludes that great discoveries begin with curiosity and the courage to explore.",
       },
     ],
   };
@@ -263,7 +227,7 @@ function generateFallbackStory(
   category: StoryCategory,
   targetWordCount: number
 ): Story {
-  const narrative = buildAdaptiveFallbackStory(topic, level, category);
+  const narrative = buildAdaptiveFallbackStory(topic, level, category, targetWordCount);
   const slug = slugify(narrative.title) + `-${Date.now().toString().slice(-4)}`;
 
   const covers = CATEGORY_COVERS[category] || CATEGORY_COVERS.Mystery;
@@ -389,6 +353,9 @@ export async function POST(req: NextRequest) {
       if (!discovery.success || discovery.models.length === 0) {
         geminiErrorLog = discovery.error || "No available Gemini models found for this API key.";
       } else {
+        const targetParagraphs = Math.max(3, Math.min(8, Math.ceil(wordCount / 65)));
+        const wordsPerParagraph = Math.round(wordCount / targetParagraphs);
+
         const prompt = `You are a world-class ESL author specializing in Stephen Krashen's 95% Comprehensible Input ($i+1$) graded readers for English learners.
 
 Create an engaging, beautifully structured, CEFR ${level}-graded story based on this topic:
@@ -396,33 +363,33 @@ Create an engaging, beautifully structured, CEFR ${level}-graded story based on 
 
 CATEGORY: ${category}
 TARGET CEFR LEVEL: ${level}
-TARGET WORD COUNT: Around ${wordCount} words (distributed across 3 engaging paragraphs).
 
-RULES FOR CEFR ${level}:
-- For A1: Use simple present & past, 500 headwords, short sentences (6-10 words).
-- For A2: Everyday routines, past simple, common connectors (and, but, because, when), sentences (8-14 words).
+STRICT WORD COUNT & PARAGRAPH REQUIREMENTS:
+1. TOTAL WORD COUNT: MUST be approximately ${wordCount} words (strict range: ${Math.round(wordCount * 0.9)} - ${Math.round(wordCount * 1.15)} words). DO NOT write a short summary!
+2. EXACTLY ${targetParagraphs} PARAGRAPHS: You MUST generate exactly ${targetParagraphs} rich, detailed paragraphs.
+3. PARAGRAPH LENGTH: Each of the ${targetParagraphs} paragraphs MUST contain approximately ${wordsPerParagraph} words (4 to 7 detailed sentences per paragraph).
+4. CEFR ${level} CALIBRATION:
+- For A1: Use simple present & past, 500 headwords, clear sentence structures.
+- For A2: Everyday routines, past simple, common connectors (and, but, because, when, while, after).
 - For B1: Descriptive narratives, compound sentences, intermediate vocabulary.
 - For B2/C1: Rich atmosphere, nuanced vocabulary, idiomatic expressions.
-
-CRITICAL INSTRUCTIONS:
-1. Write a complete, coherent, engaging story strictly relevant to "${topic}".
-2. For each paragraph, provide a natural and complete Turkish translation.
-3. For each paragraph, provide a "words" JSON dictionary mapping English words to their natural Turkish translation in this specific story context. Example: {"kitchen": "mutfak", "chef": "şef / aşçı", "delicious": "lezzetli"}.
-4. Provide 2 comprehension quiz questions with 4 options each, correctIndex (0-3), and clear explanation.
-5. Return ONLY a valid JSON object (no markdown backticks, no conversational text).
+5. PARAGRAPH TRANSLATIONS: For each of the ${targetParagraphs} paragraphs, provide the complete, fluent, and accurate Turkish translation.
+6. VOCABULARY MAPPING: For each paragraph, provide a "words" object with Turkish translations for words in that paragraph. Example: {"kitchen": "mutfak", "chef": "şef / aşçı"}.
+7. COMPREHENSION QUIZ: Provide 2 multiple-choice comprehension questions with 4 options each, correctIndex (0-3), and clear explanation.
+8. Return ONLY a valid JSON object (no markdown backticks, no conversational text).
 
 JSON STRUCTURE:
 {
-  "title": "Engaging Catchy Title in English",
+  "title": "Engaging Title in English",
   "titleTr": "Akıcı ve Doğal Türkçe Başlık",
   "slug": "kebab-case-title-slug",
-  "summary": "1-2 sentence English summary capturing the essence of the story.",
-  "summaryTr": "1-2 cümlelik akıcı ve etkileyici Türkçe hikaye özeti.",
+  "summary": "1-2 sentence English summary capturing the story arc.",
+  "summaryTr": "1-2 cümlelik akıcı Türkçe hikaye özeti.",
   "paragraphs": [
     {
       "id": "p-1",
-      "text": "Full natural English paragraph text here...",
-      "turkishTranslation": "Paragrafın eksiksiz ve akıcı Türkçe çevirisi...",
+      "text": "First detailed paragraph text (${wordsPerParagraph} words)...",
+      "turkishTranslation": "Birinci paragrafın eksiksiz ve akıcı Türkçe çevirisi...",
       "words": {
         "Every": "Her",
         "morning": "sabah"
@@ -432,17 +399,17 @@ JSON STRUCTURE:
   "quiz": [
     {
       "id": "q-1",
-      "question": "Comprehension question in English?",
+      "question": "Comprehension question 1?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctIndex": 0,
       "explanation": "Why this answer is correct."
     },
     {
       "id": "q-2",
-      "question": "Second question in English?",
+      "question": "Comprehension question 2?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctIndex": 1,
-      "explanation": "Explanation for the correct answer."
+      "explanation": "Explanation for the correct choice."
     }
   ]
 }`;
@@ -458,10 +425,10 @@ JSON STRUCTURE:
                 generationConfig: {
                   responseMimeType: "application/json",
                   temperature: 0.7,
-                  maxOutputTokens: 2500,
+                  maxOutputTokens: 8192,
                 },
               }),
-              signal: AbortSignal.timeout(20000),
+              signal: AbortSignal.timeout(25000),
             });
 
             if (response.ok) {

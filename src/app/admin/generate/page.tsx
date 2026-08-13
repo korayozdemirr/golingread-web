@@ -436,8 +436,8 @@ export default function AdminGeneratePage() {
               <input
                 type="range"
                 min={100}
-                max={400}
-                step={20}
+                max={500}
+                step={50}
                 value={wordCount}
                 onChange={(e) => setWordCount(Number(e.target.value))}
                 className="w-full h-2 bg-[#E5E7EB] dark:bg-[#2E2E2E] rounded-lg appearance-none cursor-pointer accent-indigo-600"
@@ -445,7 +445,9 @@ export default function AdminGeneratePage() {
               <div className="flex justify-between text-[10px] text-[#6B7280] dark:text-[#9CA3AF] mt-1 font-mono">
                 <span>100w (Quick)</span>
                 <span>200w (Standard)</span>
+                <span>300w (Detailed)</span>
                 <span>400w (Extended)</span>
+                <span>500w (Long)</span>
               </div>
             </div>
           </div>
