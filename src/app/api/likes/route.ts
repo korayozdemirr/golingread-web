@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!supabase) {
-      return NextResponse.json({ count: 10, isLiked: false });
+      return NextResponse.json({ count: 0, isLiked: false });
     }
 
     const { count, error } = await supabase
@@ -36,13 +36,13 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.warn("Supabase GET /api/likes error:", error.message);
-      return NextResponse.json({ count: 10, isLiked });
+      return NextResponse.json({ count: 0, isLiked });
     }
 
     return NextResponse.json({ count: count || 0, isLiked });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Internal error";
-    return NextResponse.json({ error: msg, count: 10, isLiked: false }, { status: 500 });
+    return NextResponse.json({ error: msg, count: 0, isLiked: false }, { status: 500 });
   }
 }
 

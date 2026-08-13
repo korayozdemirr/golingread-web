@@ -50,6 +50,21 @@ ON public.story_comments FOR INSERT
 TO anon 
 WITH CHECK (true);
 
+-- Allow users to update their own comments
+DROP POLICY IF EXISTS "Users can update own comments" ON public.story_comments;
+CREATE POLICY "Users can update own comments" 
+ON public.story_comments FOR UPDATE 
+TO authenticated 
+USING (auth.uid() = user_id) 
+WITH CHECK (auth.uid() = user_id);
+
+-- Allow users to delete their own comments
+DROP POLICY IF EXISTS "Users can delete own comments" ON public.story_comments;
+CREATE POLICY "Users can delete own comments" 
+ON public.story_comments FOR DELETE 
+TO authenticated 
+USING (auth.uid() = user_id);
+
 -- 3. Story Likes Table
 CREATE TABLE IF NOT EXISTS public.story_likes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

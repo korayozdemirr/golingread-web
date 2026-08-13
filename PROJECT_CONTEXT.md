@@ -140,6 +140,10 @@ The core thesis is that natural language acquisition happens effortlessly when l
 13. **Multi-User Story Comment & Like Synchronization (Supabase + Realtime):**
     - *Problem:* Users could not see each other's comments because client inserts without proper schema/ID handling or RLS permissions silently fell back to browser-specific `localStorage`, isolating comments to single devices.
     - *Solution:* Created unified server endpoints ([/api/comments](file:///Users/korayozdemir/golingread-web/src/app/api/comments/route.ts), [/api/likes](file:///Users/korayozdemir/golingread-web/src/app/api/likes/route.ts)), complete PostgreSQL migration script ([supabase_schema.sql](file:///Users/korayozdemir/golingread-web/supabase_schema.sql)) with permissive RLS policies, and added Supabase Realtime channel subscriptions in [StoryEngagement.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryEngagement.tsx) for instant live comment synchronization across all concurrent readers.
+14. **Accurate 0-Based Like Counts & Author Comment Management (Edit / Delete):**
+    - *Problem:* Like counters artificially defaulted to 8 or 12 likes instead of starting from zero real likes, and authors had no mechanism to edit or delete their own posted comments.
+    - *Solution:* Removed all hardcoded like fallbacks across endpoints and UI components to accurately reflect real 0-based database counts. Added `PATCH` and `DELETE` endpoints in `/api/comments`, full author authorization checks (`isAuthor || isAdmin`), inline comment editing (✏️), and confirmation-protected comment deletion (🗑️) with real-time UI synchronization.
+
 
 
 

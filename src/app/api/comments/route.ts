@@ -107,3 +107,76 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { commentId, content, userId } = body;
+
+    if (!commentId || !content || !content.trim()) {
+      return NextResponse.json({ error: "Comment ID and new content are required." }, { status: 400 });
+    }
+
+    if (!supabase) {
+      return NextResponse.json({ error: "Supabase is not configured." }, { status: 500 });
+    }
+
+    let query = supabase
+      .from("story_comments")
+      .update({
+        content: content.trim(),
+      })
+      .eq("id", commentId);
+
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data, error } = await query.select().single();
+
+    if (error) {
+      console.error("Supabase PATCH /api/comments error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, comment: data });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Internal error during comment update";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const commentId = searchParams.get("id");
+    const userId = searchParams.get("userId");
+
+    if (!commentId) {
+      return NextResponse.json({ error: "Comment ID is required." }, { status: 400 });
+    }
+
+    if (!supabase) {
+      return NextResponse.json({ error: "Supabase is not configured." }, { status: 500 });
+    }
+
+    let query = supabase.from("story_comments").delete().eq("id", commentId);
+
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { error } = await query;
+
+    if (error) {
+      console.error("Supabase DELETE /api/comments error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Internal error during comment deletion";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+

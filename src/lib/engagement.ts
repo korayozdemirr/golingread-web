@@ -52,13 +52,6 @@ const DEFAULT_COMMENTS_MAP: Record<string, StoryComment[]> = {
   ],
 };
 
-const DEFAULT_LIKES_MAP: Record<string, number> = {
-  "the-whispering-library": 28,
-  "airport-7579": 19,
-  "a-morning-in-kyoto": 34,
-  "the-clockwork-forest": 15,
-};
-
 // ---------------------------
 // Likes Operations
 // ---------------------------
@@ -67,7 +60,7 @@ export async function fetchStoryLikes(
   slug: string,
   userId?: string
 ): Promise<{ count: number; isLiked: boolean }> {
-  let count = DEFAULT_LIKES_MAP[slug] || 8;
+  let count = 0;
   let isLiked = false;
 
   // 1. Try Direct Supabase Query
@@ -107,6 +100,9 @@ export async function fetchStoryLikes(
         const parsed = JSON.parse(storedLikes) as Record<string, boolean>;
         if (parsed[slug] !== undefined) {
           isLiked = parsed[slug];
+          if (count === 0 && isLiked) {
+            count = 1;
+          }
         }
       }
     } catch {
@@ -122,7 +118,7 @@ export async function toggleStoryLike(
   userId?: string
 ): Promise<{ count: number; isLiked: boolean }> {
   let isLiked = false;
-  let count = DEFAULT_LIKES_MAP[slug] || 8;
+  let count = 0;
 
   // 1. Local storage state update
   if (typeof window !== "undefined") {
@@ -165,6 +161,8 @@ export async function toggleStoryLike(
     } catch (err) {
       console.warn("Supabase toggleStoryLike error:", err);
     }
+  } else {
+    count = isLiked ? 1 : 0;
   }
 
   return { count, isLiked };
@@ -340,4 +338,125 @@ export async function addStoryComment(
   }
 
   return savedComment;
+}
+
+export async function updateStoryComment(
+  commentId: string,
+  newContent: string,
+  userId?: string
+): Promise<boolean> {
+  let success = false;
+
+  // 1. Supabase update
+  if (supabase) {
+    try {
+      let query = supabase
+        .from("story_comments")
+        .update({ content: newContent.trim() })
+        .eq("id", commentId);
+
+      if (userId) {
+        query = query.eq("user_id", userId);
+      }
+
+      const { error } = await query;
+      if (!error) {
+        success = true;
+      }
+    } catch (err) {
+      console.warn("Supabase updateStoryComment error:", err);
+    }
+  }
+
+  // 2. API Route fallback
+  if (!success && typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/comments", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          commentId,
+          content: newContent.trim(),
+          userId,
+        }),
+      });
+      if (res.ok) {
+        success = true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 3. Update localStorage cache
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_COMMENTS_KEY);
+      if (stored) {
+        const allComments: StoryComment[] = JSON.parse(stored);
+        const updated = allComments.map((c) =>
+          c.id === commentId ? { ...c, content: newContent.trim() } : c
+        );
+        localStorage.setItem(LOCAL_STORAGE_COMMENTS_KEY, JSON.stringify(updated));
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return success;
+}
+
+export async function deleteStoryComment(
+  commentId: string,
+  userId?: string
+): Promise<boolean> {
+  let success = false;
+
+  // 1. Supabase delete
+  if (supabase) {
+    try {
+      let query = supabase.from("story_comments").delete().eq("id", commentId);
+      if (userId) {
+        query = query.eq("user_id", userId);
+      }
+      const { error } = await query;
+      if (!error) {
+        success = true;
+      }
+    } catch (err) {
+      console.warn("Supabase deleteStoryComment error:", err);
+    }
+  }
+
+  // 2. API Route fallback
+  if (!success && typeof window !== "undefined") {
+    try {
+      const url = userId
+        ? `/api/comments?id=${encodeURIComponent(commentId)}&userId=${encodeURIComponent(userId)}`
+        : `/api/comments?id=${encodeURIComponent(commentId)}`;
+      const res = await fetch(url, { method: "DELETE" });
+      if (res.ok) {
+        success = true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 3. Update localStorage cache
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_COMMENTS_KEY);
+      if (stored) {
+        const allComments: StoryComment[] = JSON.parse(stored);
+        const filtered = allComments.filter((c) => c.id !== commentId);
+        localStorage.setItem(LOCAL_STORAGE_COMMENTS_KEY, JSON.stringify(filtered));
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return success;
 }
