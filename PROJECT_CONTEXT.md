@@ -127,5 +127,9 @@ The core thesis is that natural language acquisition happens effortlessly when l
 9. **Gemini AI Story Generation Truncation & API Key Testing:**
    - *Problem:* Previous AI prompts forced Gemini to generate thousands of tokens of dense word-token JSON, hitting completion limits, causing JSON parsing failures that silently fell back to offline static templates without explaining API status to the administrator.
    - *Solution:* Streamlined prompt to request narrative paragraphs and quizzes, offloading tokenization to server-side dictionary engine for 20x faster generation. Added `/api/admin/verify-gemini-key`, `localStorage` key persistence, interactive "⚡ Test Key" connection tester, and transparent generation source badges in the studio.
+10. **Contextual Word Token Mapping & Adaptive Thematic Story Synthesis:**
+    - *Problem:* AI stories previously lacked word-level contextual translations (only full paragraphs were translated), causing words outside the hardcoded dictionary to lack Turkish meanings. Additionally, fallback templates produced grammatically awkward sentences for non-travel prompts.
+    - *Solution:* Engineered a compact `"words": { "word": "Turkish translation" }` JSON protocol where Gemini returns contextual Turkish meanings for every word in 1.5 seconds. Rebuilt fallback engine into an intelligent thematic narrative generator covering Cooking, Mystery, Travel, and Daily Life, and expanded `EN_TR_LEXICON` with hundreds of core nouns, verbs, and adjectives.
+
 
 
