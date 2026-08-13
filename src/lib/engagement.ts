@@ -63,7 +63,23 @@ export async function fetchStoryLikes(
   let count = 0;
   let isLiked = false;
 
-  // 1. Try Direct Supabase Query
+  // 1. Try API Route First
+  if (typeof window !== "undefined") {
+    try {
+      const url = userId
+        ? `/api/likes?slug=${encodeURIComponent(slug)}&userId=${encodeURIComponent(userId)}`
+        : `/api/likes?slug=${encodeURIComponent(slug)}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        return { count: data.count || 0, isLiked: !!data.isLiked };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Direct Supabase Fallback
   if (supabase) {
     try {
       const { count: dbCount, error: countErr } = await supabase
@@ -88,11 +104,11 @@ export async function fetchStoryLikes(
         }
       }
     } catch (err) {
-      console.warn("Direct Supabase likes query failed:", err);
+      console.warn("Supabase fetchStoryLikes fallback failed:", err);
     }
   }
 
-  // 2. Read local storage for guest state
+  // 3. Local storage fallback
   if (typeof window !== "undefined") {
     try {
       const storedLikes = localStorage.getItem(LOCAL_STORAGE_LIKES_KEY);
@@ -117,14 +133,44 @@ export async function toggleStoryLike(
   slug: string,
   userId?: string
 ): Promise<{ count: number; isLiked: boolean }> {
+  // 1. Try API Route First
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/likes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storySlug: slug,
+          userId,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Update local storage
+        try {
+          const storedLikes = localStorage.getItem(LOCAL_STORAGE_LIKES_KEY);
+          const parsed = storedLikes ? JSON.parse(storedLikes) : {};
+          parsed[slug] = !!data.isLiked;
+          localStorage.setItem(LOCAL_STORAGE_LIKES_KEY, JSON.stringify(parsed));
+        } catch {
+          // ignore
+        }
+        return { count: data.count || 0, isLiked: !!data.isLiked };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Direct Supabase Fallback
   let isLiked = false;
   let count = 0;
 
-  // 1. Local storage state update
   if (typeof window !== "undefined") {
     try {
       const storedLikes = localStorage.getItem(LOCAL_STORAGE_LIKES_KEY);
-      const parsed: Record<string, boolean> = storedLikes ? JSON.parse(storedLikes) : {};
+      const parsed = storedLikes ? JSON.parse(storedLikes) : {};
       isLiked = !parsed[slug];
       parsed[slug] = isLiked;
       localStorage.setItem(LOCAL_STORAGE_LIKES_KEY, JSON.stringify(parsed));
@@ -133,7 +179,6 @@ export async function toggleStoryLike(
     }
   }
 
-  // 2. Cloud Supabase sync
   if (supabase && userId) {
     try {
       if (isLiked) {
@@ -159,7 +204,7 @@ export async function toggleStoryLike(
         count = freshCount;
       }
     } catch (err) {
-      console.warn("Supabase toggleStoryLike error:", err);
+      console.warn("Direct Supabase toggleStoryLike error:", err);
     }
   } else {
     count = isLiked ? 1 : 0;
@@ -175,7 +220,22 @@ export async function toggleStoryLike(
 export async function fetchStoryComments(slug: string): Promise<StoryComment[]> {
   const initialSeeds = DEFAULT_COMMENTS_MAP[slug] || [];
 
-  // 1. Try Supabase directly
+  // 1. Try API Route First
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
+          return data.comments;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Try Direct Supabase Query
   if (supabase) {
     try {
       const { data: dbComments, error } = await supabase
@@ -200,21 +260,6 @@ export async function fetchStoryComments(slug: string): Promise<StoryComment[]> 
       }
     } catch (err) {
       console.warn("Supabase fetchStoryComments failed:", err);
-    }
-  }
-
-  // 2. Try API Route fallback
-  if (typeof window !== "undefined") {
-    try {
-      const res = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.comments && data.comments.length > 0) {
-          return data.comments;
-        }
-      }
-    } catch {
-      // ignore
     }
   }
 
@@ -257,8 +302,35 @@ export async function addStoryComment(
 
   let savedComment: StoryComment = fallbackComment;
 
-  // 1. Try Supabase Insert
-  if (supabase) {
+  // 1. Try API Route First
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storySlug: slug,
+          content: content.trim(),
+          userName: userProfile.name,
+          userAvatar: userProfile.avatarUrl,
+          userLevel: userProfile.level,
+          userId,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.comment) {
+          savedComment = json.comment;
+        }
+      }
+    } catch (err) {
+      console.warn("API /api/comments error in addStoryComment:", err);
+    }
+  }
+
+  // 2. Direct Supabase Fallback if API Route didn't return a record with DB id
+  if (savedComment.id === fallbackComment.id && supabase) {
     try {
       const insertData: Record<string, unknown> = {
         story_slug: slug,
@@ -291,38 +363,9 @@ export async function addStoryComment(
           createdAt: data.created_at || new Date().toISOString(),
           likesCount: data.likes_count || 0,
         };
-      } else if (error) {
-        console.error("Supabase insert error in addStoryComment:", error);
       }
     } catch (err) {
       console.warn("Direct Supabase insert exception:", err);
-    }
-  }
-
-  // 2. Also try API Route if Supabase direct didn't return a record with DB id
-  if (savedComment.id === fallbackComment.id && typeof window !== "undefined") {
-    try {
-      const res = await fetch("/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          storySlug: slug,
-          content: content.trim(),
-          userName: userProfile.name,
-          userAvatar: userProfile.avatarUrl,
-          userLevel: userProfile.level,
-          userId,
-        }),
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        if (json.comment) {
-          savedComment = json.comment;
-        }
-      }
-    } catch (err) {
-      console.warn("API /api/comments error:", err);
     }
   }
 
@@ -345,31 +388,8 @@ export async function updateStoryComment(
   newContent: string,
   userId?: string
 ): Promise<boolean> {
-  let success = false;
-
-  // 1. Supabase update
-  if (supabase) {
-    try {
-      let query = supabase
-        .from("story_comments")
-        .update({ content: newContent.trim() })
-        .eq("id", commentId);
-
-      if (userId) {
-        query = query.eq("user_id", userId);
-      }
-
-      const { error } = await query;
-      if (!error) {
-        success = true;
-      }
-    } catch (err) {
-      console.warn("Supabase updateStoryComment error:", err);
-    }
-  }
-
-  // 2. API Route fallback
-  if (!success && typeof window !== "undefined") {
+  // 1. Try API Route First
+  if (typeof window !== "undefined") {
     try {
       const res = await fetch("/api/comments", {
         method: "PATCH",
@@ -381,10 +401,41 @@ export async function updateStoryComment(
         }),
       });
       if (res.ok) {
-        success = true;
+        // Sync local storage
+        try {
+          const stored = localStorage.getItem(LOCAL_STORAGE_COMMENTS_KEY);
+          if (stored) {
+            const allComments: StoryComment[] = JSON.parse(stored);
+            const updated = allComments.map((c) =>
+              c.id === commentId ? { ...c, content: newContent.trim() } : c
+            );
+            localStorage.setItem(LOCAL_STORAGE_COMMENTS_KEY, JSON.stringify(updated));
+          }
+        } catch {
+          // ignore
+        }
+        return true;
       }
     } catch {
       // ignore
+    }
+  }
+
+  // 2. Direct Supabase Fallback
+  if (supabase) {
+    try {
+      let query = supabase
+        .from("story_comments")
+        .update({ content: newContent.trim() })
+        .eq("id", commentId);
+
+      if (userId) {
+        query = query.eq("user_id", userId);
+      }
+
+      await query;
+    } catch (err) {
+      console.warn("Supabase updateStoryComment error:", err);
     }
   }
 
@@ -404,43 +455,49 @@ export async function updateStoryComment(
     }
   }
 
-  return success;
+  return true;
 }
 
 export async function deleteStoryComment(
   commentId: string,
   userId?: string
 ): Promise<boolean> {
-  let success = false;
-
-  // 1. Supabase delete
-  if (supabase) {
-    try {
-      let query = supabase.from("story_comments").delete().eq("id", commentId);
-      if (userId) {
-        query = query.eq("user_id", userId);
-      }
-      const { error } = await query;
-      if (!error) {
-        success = true;
-      }
-    } catch (err) {
-      console.warn("Supabase deleteStoryComment error:", err);
-    }
-  }
-
-  // 2. API Route fallback
-  if (!success && typeof window !== "undefined") {
+  // 1. Try API Route First
+  if (typeof window !== "undefined") {
     try {
       const url = userId
         ? `/api/comments?id=${encodeURIComponent(commentId)}&userId=${encodeURIComponent(userId)}`
         : `/api/comments?id=${encodeURIComponent(commentId)}`;
       const res = await fetch(url, { method: "DELETE" });
       if (res.ok) {
-        success = true;
+        // Sync local storage
+        try {
+          const stored = localStorage.getItem(LOCAL_STORAGE_COMMENTS_KEY);
+          if (stored) {
+            const allComments: StoryComment[] = JSON.parse(stored);
+            const filtered = allComments.filter((c) => c.id !== commentId);
+            localStorage.setItem(LOCAL_STORAGE_COMMENTS_KEY, JSON.stringify(filtered));
+          }
+        } catch {
+          // ignore
+        }
+        return true;
       }
     } catch {
       // ignore
+    }
+  }
+
+  // 2. Direct Supabase Fallback
+  if (supabase) {
+    try {
+      let query = supabase.from("story_comments").delete().eq("id", commentId);
+      if (userId) {
+        query = query.eq("user_id", userId);
+      }
+      await query;
+    } catch (err) {
+      console.warn("Supabase deleteStoryComment error:", err);
     }
   }
 
@@ -458,5 +515,5 @@ export async function deleteStoryComment(
     }
   }
 
-  return success;
+  return true;
 }

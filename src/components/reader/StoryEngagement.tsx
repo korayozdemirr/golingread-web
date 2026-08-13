@@ -262,18 +262,19 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
 
   // Save Inline Edit
   const handleSaveEdit = async (commentId: string) => {
-    if (!editContent.trim()) return;
+    const trimmed = editContent.trim();
+    if (!trimmed) return;
     setIsSavingEdit(true);
 
+    // Optimistic instant UI update
+    setComments((prev) =>
+      prev.map((c) => (c.id === commentId ? { ...c, content: trimmed } : c))
+    );
+    setEditingCommentId(null);
+    setEditContent("");
+
     try {
-      const success = await updateStoryComment(commentId, editContent.trim(), user?.id);
-      if (success) {
-        setComments((prev) =>
-          prev.map((c) => (c.id === commentId ? { ...c, content: editContent.trim() } : c))
-        );
-        setEditingCommentId(null);
-        setEditContent("");
-      }
+      await updateStoryComment(commentId, trimmed, user?.id);
     } catch (err) {
       console.error("Error updating comment:", err);
     } finally {
@@ -286,11 +287,11 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
     if (!window.confirm("Are you sure you want to delete this comment?")) return;
     setDeletingCommentId(commentId);
 
+    // Optimistic instant UI removal
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+
     try {
-      const success = await deleteStoryComment(commentId, user?.id);
-      if (success) {
-        setComments((prev) => prev.filter((c) => c.id !== commentId));
-      }
+      await deleteStoryComment(commentId, user?.id);
     } catch (err) {
       console.error("Error deleting comment:", err);
     } finally {

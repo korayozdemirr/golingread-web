@@ -143,6 +143,10 @@ The core thesis is that natural language acquisition happens effortlessly when l
 14. **Accurate 0-Based Like Counts & Author Comment Management (Edit / Delete):**
     - *Problem:* Like counters artificially defaulted to 8 or 12 likes instead of starting from zero real likes, and authors had no mechanism to edit or delete their own posted comments.
     - *Solution:* Removed all hardcoded like fallbacks across endpoints and UI components to accurately reflect real 0-based database counts. Added `PATCH` and `DELETE` endpoints in `/api/comments`, full author authorization checks (`isAuthor || isAdmin`), inline comment editing (✏️), and confirmation-protected comment deletion (🗑️) with real-time UI synchronization.
+15. **Optimistic Real-Time Comment Mutations & Brand Beta Badge:**
+    - *Problem:* Editing/deleting comments had UI delay or remained stuck in edit mode when waiting for backend responses, and the brand header lacked a Beta status indicator.
+    - *Solution:* Implemented instant zero-lag optimistic UI updates for comment edits and deletions in [StoryEngagement.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryEngagement.tsx), routed client operations through resilient `/api/comments` server endpoints with direct Supabase fallbacks, and integrated an editorial `Beta` badge pill alongside the GoLingread brand logo in [Navbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/layout/Navbar.tsx).
+
 
 
 

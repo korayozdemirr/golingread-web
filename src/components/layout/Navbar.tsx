@@ -81,8 +81,13 @@ export const Navbar: React.FC = () => {
             </svg>
           </div>
           <div>
-            <div className="text-xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] leading-none">
-              GoLing<span className="text-indigo-600 dark:text-indigo-400">read</span>
+            <div className="flex items-center gap-1.5">
+              <div className="text-xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] leading-none">
+                GoLing<span className="text-indigo-600 dark:text-indigo-400">read</span>
+              </div>
+              <span className="px-1.5 py-0.2 text-[9px] font-extrabold tracking-wider uppercase rounded-md bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
+                Beta
+              </span>
             </div>
             <span className="text-[10px] font-medium tracking-wider text-[#6B7280] dark:text-[#9CA3AF]">
               95% COMPREHENSIBLE INPUT
