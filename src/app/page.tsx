@@ -64,7 +64,7 @@ export default function Home() {
       <Navbar />
 
       {/* Main Content Area */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-8 flex-1 w-full">
         {/* Krashen 95% Hero & Level Calibrator */}
         <HeroSection
           userProfile={userProfile}

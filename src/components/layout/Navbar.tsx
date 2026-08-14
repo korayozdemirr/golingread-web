@@ -159,7 +159,7 @@ export const Navbar: React.FC = () => {
             suppressHydrationWarning
             onClick={openLevelTestModal}
             title="Click to test or recalibrate your CEFR level"
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span suppressHydrationWarning>Level: {userProfile.level}</span>
@@ -325,40 +325,6 @@ export const Navbar: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Mobile Submenu Bar */}
-      <div className="md:hidden flex items-center justify-around border-t border-[#E5E7EB] dark:border-[#2E2E2E] px-2 py-2 bg-[#FDFBF7] dark:bg-[#181818]">
-        <Link
-          href="/"
-          className={`px-3 py-1 text-xs font-medium rounded-lg ${
-            isHome
-              ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
-              : "text-[#6B7280] dark:text-[#9CA3AF]"
-          }`}
-        >
-          📖 Stories
-        </Link>
-        <Link
-          href="/vocabulary"
-          className={`px-3 py-1 text-xs font-medium flex items-center gap-1 ${
-            isVocabulary
-              ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
-              : "text-[#6B7280] dark:text-[#9CA3AF]"
-          }`}
-        >
-          <span>✨ Vocabulary</span>
-          <span className="px-1 py-0.2 bg-[#E5E7EB] dark:bg-[#2E2E2E] rounded-full text-[10px]">
-            {vocabulary.length}
-          </span>
-        </Link>
-        <button
-          type="button"
-          onClick={openLevelTestModal}
-          className="px-3 py-1 text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF]"
-        >
-          🎯 Level Test
-        </button>
       </div>
     </header>
   );

@@ -149,6 +149,14 @@ The core thesis is that natural language acquisition happens effortlessly when l
 16. **SSR Hydration Mismatch & Optimistic Like Toggle Resolution:**
     - *Problem:* Reading `localStorage` during initial state initialization caused React hydration mismatch errors on `Navbar.tsx` (`dailyStreak` 1 vs 5), and likes remained stuck at 0 for unauthenticated guests because server endpoints ignored requests without `userId`.
     - *Solution:* Refactored [AppContext.tsx](file:///Users/korayozdemir/golingread-web/src/context/AppContext.tsx) to initialize with stable server defaults and load client `localStorage` safely inside `useEffect` (adding `suppressHydrationWarning` on dynamic badges), and enabled optimistic zero-delay like count toggling for both guest and authenticated learners across [/api/likes](file:///Users/korayozdemir/golingread-web/src/app/api/likes/route.ts) and [StoryEngagement.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryEngagement.tsx).
+17. **Native Mobile App Layout & Ergonomics Transformation (Bottom Navigation & Bottom Sheets):**
+    - *Problem:* The mobile view felt like a scaled-down desktop site with a cluttered double-decker top header, awkwardly floating tooltips that covered story text, and lack of native app touch ergonomics.
+    - *Solution:* Engineered a native app mobile experience featuring:
+      - **Fixed Mobile Bottom Tab Bar:** ([MobileTabBar.tsx](file:///Users/korayozdemir/golingread-web/src/components/layout/MobileTabBar.tsx)) with 4 primary destinations (Stories, Vocabulary with live badge, Level Test quick-trigger, and Profile Drawer with Streak/XP stats).
+      - **Native Word Translation Bottom Sheet:** ([WordPopover.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/WordPopover.tsx)) with drag handle indicator, backdrop blur dismiss scrim, American English audio speaker, and prominent "+ Save to Deck" action button.
+      - **Mobile Reading Appearance Drawer:** ([ReaderToolbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/ReaderToolbar.tsx)) with slide-up paper theme palette switcher, line height buttons, and font scaling.
+      - **Touch-Optimized Feed & Vocabulary Hub:** ([HeroSection.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/HeroSection.tsx), [FilterBar.tsx](file:///Users/korayozdemir/golingread-web/src/components/feed/FilterBar.tsx), [vocabulary/page.tsx](file:///Users/korayozdemir/golingread-web/src/app/vocabulary/page.tsx)) with horizontal swipe carousels, 3D flip card mobile ergonomics, and `pb-24` safe-area bottom padding.
+
 
 
 

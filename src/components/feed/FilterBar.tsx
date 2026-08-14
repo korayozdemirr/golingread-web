@@ -45,11 +45,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   totalStoriesCount,
 }) => {
   return (
-    <div className="space-y-4 mb-8">
+    <div className="space-y-3.5 mb-6 sm:mb-8">
       {/* Top row: Search and count */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-row items-center justify-between gap-3">
         {/* Search Bar */}
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B7280] dark:text-[#9CA3AF]">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -64,8 +64,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search stories by title or theme..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-sm text-[#1F2937] dark:text-[#E5E7EB] placeholder-[#6B7280]/60 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 transition-all"
+            placeholder="Search stories by keyword..."
+            className="w-full pl-10 pr-8 py-2.5 rounded-2xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-xs sm:text-sm text-[#1F2937] dark:text-[#E5E7EB] placeholder-[#6B7280]/60 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 transition-all shadow-2xs"
           />
           {searchQuery && (
             <button
@@ -78,17 +78,17 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           )}
         </div>
 
-        {/* Stories Count */}
-        <div className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF]">
-          {totalStoriesCount} Stories Available
+        {/* Stories Count Badge */}
+        <div className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/80 px-2.5 py-1 rounded-full shrink-0">
+          {totalStoriesCount} Stories
         </div>
       </div>
 
       {/* Filter Row: Level Pills & Category Pills */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#2E2E2E]">
-        {/* CEFR Level Filter */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          <span className="text-xs font-bold text-[#6B7280] dark:text-[#9CA3AF] mr-1 hidden sm:inline">
+      <div className="space-y-2 pb-2 border-b border-[#E5E7EB] dark:border-[#2E2E2E]">
+        {/* CEFR Level Filter (Horizontal scrollable carousel on mobile) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#9CA3AF] mr-1 hidden sm:inline">
             Level:
           </span>
           {LEVELS.map((lvl) => {
@@ -98,9 +98,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 key={lvl}
                 type="button"
                 onClick={() => onSelectLevel(lvl)}
-                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer shrink-0 ${
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 active:scale-95 ${
                   isSelected
-                    ? "bg-[#1F2937] text-white dark:bg-[#E5E7EB] dark:text-[#121212]"
+                    ? "bg-[#1F2937] text-white dark:bg-[#E5E7EB] dark:text-[#121212] shadow-xs"
                     : "bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] border border-[#E5E7EB] dark:border-[#2E2E2E] hover:bg-[#F9FAFB] dark:hover:bg-[#252528]"
                 }`}
               >
@@ -110,8 +110,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           })}
         </div>
 
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+        {/* Category Pills (Horizontal scrollable carousel on mobile) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
@@ -119,9 +119,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 key={cat}
                 type="button"
                 onClick={() => onSelectCategory(cat)}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors cursor-pointer shrink-0 ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer shrink-0 active:scale-95 ${
                   isSelected
-                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                    ? "bg-indigo-600 text-white dark:bg-indigo-500 shadow-xs"
                     : "bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] border border-[#E5E7EB] dark:border-[#2E2E2E] hover:bg-[#F9FAFB] dark:hover:bg-[#252528]"
                 }`}
               >
