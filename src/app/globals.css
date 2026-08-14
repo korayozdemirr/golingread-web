@@ -27,12 +27,33 @@
   --font-serif: var(--font-lora), var(--font-serif-fallback);
 }
 
+html {
+  background-color: var(--background);
+  color-scheme: light;
+}
+
+html.dark {
+  background-color: #121212 !important;
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Safe area padding utilities for iOS Safari notch, dynamic island and bottom home bar */
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
 }
 
 /* Reader Typography */

@@ -234,12 +234,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Synchronize document dark class on theme changes
+  // Synchronize document dark class and mobile browser status bar theme on theme changes
   useEffect(() => {
+    const color = isDarkMode ? "#121212" : "#FDFBF7";
+
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
+    }
+
+    if (typeof document !== "undefined") {
+      let themeMeta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+      if (themeMeta) {
+        themeMeta.content = color;
+      } else {
+        themeMeta = document.createElement("meta");
+        themeMeta.name = "theme-color";
+        themeMeta.content = color;
+        document.head.appendChild(themeMeta);
+      }
     }
   }, [isDarkMode]);
 
