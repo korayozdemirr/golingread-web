@@ -179,7 +179,7 @@ export async function toggleStoryLike(
   }
 
   // 2. Direct Supabase Fallback
-  let isLiked = nextLiked;
+  const isLiked = nextLiked;
   let count = 0;
 
   if (typeof window !== "undefined") {

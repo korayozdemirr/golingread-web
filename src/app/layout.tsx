@@ -18,16 +18,6 @@ import { AppProvider } from "@/context/AppContext";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FDFBF7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0f" },
-  ],
-};
-
 export const metadata: Metadata = {
   title: "GoLingread | 95% Comprehensible Input English Reading",
   description:
@@ -39,20 +29,28 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FDFBF7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0b0f" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${lora.variable} overflow-x-hidden`}>
+    <html lang="en" className={`${inter.variable} ${lora.variable} overflow-x-hidden overscroll-none`}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <meta name="theme-color" content="#0b0b0f" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <body className="min-h-screen flex flex-col font-sans overflow-x-hidden selection:bg-indigo-500/20 selection:text-indigo-700 dark:selection:bg-indigo-400/20 dark:selection:text-indigo-300">
+      <body className="min-h-dvh flex flex-col font-sans overflow-x-hidden overscroll-none selection:bg-indigo-500/20 selection:text-indigo-700 dark:selection:bg-indigo-400/20 dark:selection:text-indigo-300">
         <AppProvider>
           {children}
           <MobileTabBar />

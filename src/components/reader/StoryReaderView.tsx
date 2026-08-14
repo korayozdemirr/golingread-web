@@ -35,7 +35,7 @@ export const StoryReaderView: React.FC<StoryReaderViewProps> = ({ story: rawStor
   };
 
   return (
-    <div className="min-h-screen flex flex-col transition-colors duration-200">
+    <div className="min-h-dvh flex flex-col transition-colors duration-200">
       {/* Top Navigation */}
       <Navbar />
 

@@ -254,7 +254,7 @@ export default function AdminGeneratePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FDFBF7] dark:bg-[#121212] text-[#1F2937] dark:text-[#E5E7EB] transition-colors duration-200">
+    <div className="min-h-dvh flex flex-col bg-[#FDFBF7] dark:bg-[#121212] text-[#1F2937] dark:text-[#E5E7EB] transition-colors duration-200">
       {/* Navbar */}
       <Navbar />
 
