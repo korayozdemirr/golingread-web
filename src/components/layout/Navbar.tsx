@@ -58,15 +58,15 @@ export const Navbar: React.FC = () => {
         </aside>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Brand Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-hidden"
+          className="flex items-center gap-2 sm:gap-2.5 text-left group cursor-pointer focus:outline-hidden min-w-0"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-500 dark:to-indigo-700 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-500 dark:to-indigo-700 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
             <svg
-              className="w-5 h-5"
+              className="w-4 h-4 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -80,22 +80,22 @@ export const Navbar: React.FC = () => {
               />
             </svg>
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <div className="text-xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] leading-none">
+              <div className="text-lg sm:text-xl font-bold tracking-tight text-[#1F2937] dark:text-[#E5E7EB] leading-none">
                 GoLing<span className="text-indigo-600 dark:text-indigo-400">read</span>
               </div>
-              <span className="px-1.5 py-0.2 text-[9px] font-extrabold tracking-wider uppercase rounded-md bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
+              <span className="px-1.5 py-0.2 text-[9px] font-extrabold tracking-wider uppercase rounded-md bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 shrink-0">
                 Beta
               </span>
             </div>
-            <span className="text-[10px] font-medium tracking-wider text-[#6B7280] dark:text-[#9CA3AF]">
+            <span className="text-[10px] font-medium tracking-wider text-[#6B7280] dark:text-[#9CA3AF] hidden sm:block">
               95% COMPREHENSIBLE INPUT
             </span>
           </div>
         </Link>
 
-        {/* Center: Main Navigation */}
+        {/* Center: Main Navigation (Desktop) */}
         <nav className="hidden md:flex items-center gap-1.5">
           <Link
             href="/"
@@ -132,18 +132,18 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* Right: Gamification Badges, User Status & Actions */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Daily Streak Counter */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Daily Streak Counter (Desktop only, mobile has bottom tab) */}
           <div
             suppressHydrationWarning
             title={`Daily Reading Streak: ${userProfile.dailyStreak} Days! Read every day to grow your flame.`}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-extrabold shadow-2xs hover:scale-105 transition-transform cursor-help"
+            className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-extrabold shadow-2xs hover:scale-105 transition-transform cursor-help"
           >
             <span className="animate-pulse">🔥</span>
             <span suppressHydrationWarning>{userProfile.dailyStreak}d</span>
           </div>
 
-          {/* Experience Points (XP) Pill */}
+          {/* Experience Points (XP) Pill (Desktop only) */}
           <div
             suppressHydrationWarning
             title={`Total Experience Points: ${userProfile.xp || 0} XP (+50 per story, +10 per word, +5 likes, +20 comments)`}
@@ -153,7 +153,7 @@ export const Navbar: React.FC = () => {
             <span suppressHydrationWarning>{userProfile.xp || 0} XP</span>
           </div>
 
-          {/* User CEFR Level Pill */}
+          {/* User CEFR Level Pill (Desktop only) */}
           <button
             type="button"
             suppressHydrationWarning
@@ -170,7 +170,7 @@ export const Navbar: React.FC = () => {
             type="button"
             onClick={toggleDarkMode}
             aria-label="Toggle Light / Dark Mode"
-            className="w-9 h-9 rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-[#E5E7EB] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#E5E7EB] flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             {isDarkMode ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,7 +198,7 @@ export const Navbar: React.FC = () => {
             <button
               type="button"
               onClick={openAuthModal}
-              className="py-1.5 px-3 sm:px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 text-white font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              className="py-1.5 px-3 sm:px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 text-white font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -215,7 +215,7 @@ export const Navbar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white font-bold text-xs flex items-center justify-center shadow-xs cursor-pointer hover:scale-105 transition-transform overflow-hidden"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white font-bold text-xs flex items-center justify-center shadow-xs cursor-pointer hover:scale-105 transition-transform overflow-hidden shrink-0"
               >
                 {userProfile.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
