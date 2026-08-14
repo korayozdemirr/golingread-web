@@ -27,7 +27,7 @@
   --font-serif: var(--font-lora), var(--font-serif-fallback);
 }
 
-body {
+html, body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
