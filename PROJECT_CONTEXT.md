@@ -146,6 +146,10 @@ The core thesis is that natural language acquisition happens effortlessly when l
 15. **Optimistic Real-Time Comment Mutations & Brand Beta Badge:**
     - *Problem:* Editing/deleting comments had UI delay or remained stuck in edit mode when waiting for backend responses, and the brand header lacked a Beta status indicator.
     - *Solution:* Implemented instant zero-lag optimistic UI updates for comment edits and deletions in [StoryEngagement.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryEngagement.tsx), routed client operations through resilient `/api/comments` server endpoints with direct Supabase fallbacks, and integrated an editorial `Beta` badge pill alongside the GoLingread brand logo in [Navbar.tsx](file:///Users/korayozdemir/golingread-web/src/components/layout/Navbar.tsx).
+16. **SSR Hydration Mismatch & Optimistic Like Toggle Resolution:**
+    - *Problem:* Reading `localStorage` during initial state initialization caused React hydration mismatch errors on `Navbar.tsx` (`dailyStreak` 1 vs 5), and likes remained stuck at 0 for unauthenticated guests because server endpoints ignored requests without `userId`.
+    - *Solution:* Refactored [AppContext.tsx](file:///Users/korayozdemir/golingread-web/src/context/AppContext.tsx) to initialize with stable server defaults and load client `localStorage` safely inside `useEffect` (adding `suppressHydrationWarning` on dynamic badges), and enabled optimistic zero-delay like count toggling for both guest and authenticated learners across [/api/likes](file:///Users/korayozdemir/golingread-web/src/app/api/likes/route.ts) and [StoryEngagement.tsx](file:///Users/korayozdemir/golingread-web/src/components/reader/StoryEngagement.tsx).
+
 
 
 

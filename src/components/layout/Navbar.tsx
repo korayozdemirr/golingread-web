@@ -135,31 +135,34 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Daily Streak Counter */}
           <div
+            suppressHydrationWarning
             title={`Daily Reading Streak: ${userProfile.dailyStreak} Days! Read every day to grow your flame.`}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-extrabold shadow-2xs hover:scale-105 transition-transform cursor-help"
           >
             <span className="animate-pulse">🔥</span>
-            <span>{userProfile.dailyStreak}d</span>
+            <span suppressHydrationWarning>{userProfile.dailyStreak}d</span>
           </div>
 
           {/* Experience Points (XP) Pill */}
           <div
+            suppressHydrationWarning
             title={`Total Experience Points: ${userProfile.xp || 0} XP (+50 per story, +10 per word, +5 likes, +20 comments)`}
             className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900/60 text-indigo-800 dark:text-indigo-300 text-xs font-extrabold shadow-2xs hover:scale-105 transition-transform cursor-help"
           >
             <span>⚡</span>
-            <span>{userProfile.xp || 0} XP</span>
+            <span suppressHydrationWarning>{userProfile.xp || 0} XP</span>
           </div>
 
           {/* User CEFR Level Pill */}
           <button
             type="button"
+            suppressHydrationWarning
             onClick={openLevelTestModal}
             title="Click to test or recalibrate your CEFR level"
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Level: {userProfile.level}</span>
+            <span suppressHydrationWarning>Level: {userProfile.level}</span>
           </button>
 
           {/* Theme Toggle Button */}

@@ -133,6 +133,20 @@ export async function toggleStoryLike(
   slug: string,
   userId?: string
 ): Promise<{ count: number; isLiked: boolean }> {
+  // Read current local state to compute guest action
+  let currentLiked = false;
+  if (typeof window !== "undefined") {
+    try {
+      const storedLikes = localStorage.getItem(LOCAL_STORAGE_LIKES_KEY);
+      const parsed = storedLikes ? JSON.parse(storedLikes) : {};
+      currentLiked = !!parsed[slug];
+    } catch {
+      // ignore
+    }
+  }
+
+  const nextLiked = !currentLiked;
+
   // 1. Try API Route First
   if (typeof window !== "undefined") {
     try {
@@ -142,6 +156,7 @@ export async function toggleStoryLike(
         body: JSON.stringify({
           storySlug: slug,
           userId,
+          guestAction: nextLiked,
         }),
       });
 
@@ -164,14 +179,13 @@ export async function toggleStoryLike(
   }
 
   // 2. Direct Supabase Fallback
-  let isLiked = false;
+  let isLiked = nextLiked;
   let count = 0;
 
   if (typeof window !== "undefined") {
     try {
       const storedLikes = localStorage.getItem(LOCAL_STORAGE_LIKES_KEY);
       const parsed = storedLikes ? JSON.parse(storedLikes) : {};
-      isLiked = !parsed[slug];
       parsed[slug] = isLiked;
       localStorage.setItem(LOCAL_STORAGE_LIKES_KEY, JSON.stringify(parsed));
     } catch {

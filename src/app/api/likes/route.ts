@@ -49,19 +49,15 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { storySlug, userId } = body;
+    const { storySlug, userId, guestAction } = body;
 
     if (!storySlug) {
       return NextResponse.json({ error: "Story slug is required." }, { status: 400 });
     }
 
-    if (!supabase) {
-      return NextResponse.json({ error: "Supabase is not configured." }, { status: 500 });
-    }
-
-    // Check if user already liked
     let isLiked = false;
-    if (userId) {
+
+    if (supabase && userId) {
       const { data: existing } = await supabase
         .from("story_likes")
         .select("id")
@@ -70,7 +66,6 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
 
       if (existing) {
-        // Unlike
         await supabase
           .from("story_likes")
           .delete()
@@ -78,7 +73,6 @@ export async function POST(req: NextRequest) {
           .eq("user_id", userId);
         isLiked = false;
       } else {
-        // Like
         await supabase.from("story_likes").insert({
           story_slug: storySlug,
           user_id: userId,
@@ -86,14 +80,29 @@ export async function POST(req: NextRequest) {
         });
         isLiked = true;
       }
+
+      const { count } = await supabase
+        .from("story_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("story_slug", storySlug);
+
+      return NextResponse.json({ count: count || (isLiked ? 1 : 0), isLiked });
     }
 
-    const { count } = await supabase
-      .from("story_likes")
-      .select("*", { count: "exact", head: true })
-      .eq("story_slug", storySlug);
+    // Guest toggle
+    isLiked = typeof guestAction === "boolean" ? guestAction : true;
+    let count = 0;
+    if (supabase) {
+      const { count: dbCount } = await supabase
+        .from("story_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("story_slug", storySlug);
+      count = Math.max(0, (dbCount || 0) + (isLiked ? 1 : 0));
+    } else {
+      count = isLiked ? 1 : 0;
+    }
 
-    return NextResponse.json({ count: count || 0, isLiked });
+    return NextResponse.json({ count, isLiked });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Internal error";
     return NextResponse.json({ error: msg }, { status: 500 });

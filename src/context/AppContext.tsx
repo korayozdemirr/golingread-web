@@ -166,62 +166,6 @@ function verifyStreak(profile: UserProfile): UserProfile {
   };
 }
 
-const getInitialProfile = (): UserProfile => {
-  if (typeof window !== "undefined") {
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEYS.PROFILE);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return verifyStreak({
-          ...DEFAULT_USER_PROFILE,
-          ...parsed,
-          xp: parsed.xp ?? DEFAULT_USER_PROFILE.xp,
-          unlockedBadges: parsed.unlockedBadges ?? DEFAULT_USER_PROFILE.unlockedBadges,
-        });
-      }
-    } catch {
-      // ignore
-    }
-  }
-  return DEFAULT_USER_PROFILE;
-};
-
-const getInitialVocabulary = (): VocabularyItem[] => {
-  if (typeof window !== "undefined") {
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEYS.VOCABULARY);
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // ignore
-    }
-  }
-  return INITIAL_VOCABULARY;
-};
-
-const getInitialBookmarks = (): Set<string> => {
-  if (typeof window !== "undefined") {
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEYS.BOOKMARKS);
-      if (stored) return new Set(JSON.parse(stored));
-    } catch {
-      // ignore
-    }
-  }
-  return new Set(["story-1"]);
-};
-
-const getInitialTheme = (): boolean => {
-  if (typeof window !== "undefined") {
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEYS.THEME);
-      if (stored !== null) return stored === "true";
-    } catch {
-      // ignore
-    }
-  }
-  return false;
-};
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Auth State
   const [user, setUser] = useState<User | null>(null);
@@ -229,17 +173,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
-  // App Data State (Hybrid Local / Cloud)
-  const [userProfile, setUserProfile] = useState<UserProfile>(getInitialProfile);
-  const [vocabulary, setVocabulary] = useState<VocabularyItem[]>(getInitialVocabulary);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(getInitialBookmarks);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialTheme);
+  // App Data State (Hybrid Local / Cloud) - Initialized with stable server defaults to prevent hydration mismatch
+  const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
+  const [vocabulary, setVocabulary] = useState<VocabularyItem[]>(INITIAL_VOCABULARY);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(["story-1"]));
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isLevelTestModalOpen, setIsLevelTestModalOpen] = useState<boolean>(false);
 
   // Gamification Badge Toast Notification
   const [newlyUnlockedBadge, setNewlyUnlockedBadge] = useState<UserBadge | null>(null);
 
   const lastLoadedUserIdRef = useRef<string | null>(null);
+
+  // Hydration-safe initial client storage loading & Daily Streak verification
+  useEffect(() => {
+    try {
+      // 1. Load Profile
+      const storedProfile = localStorage.getItem(LOCAL_STORAGE_KEYS.PROFILE);
+      if (storedProfile) {
+        const parsed = JSON.parse(storedProfile);
+        const updated = verifyStreak({
+          ...DEFAULT_USER_PROFILE,
+          ...parsed,
+          xp: parsed.xp ?? DEFAULT_USER_PROFILE.xp,
+          unlockedBadges: parsed.unlockedBadges ?? DEFAULT_USER_PROFILE.unlockedBadges,
+        });
+        setUserProfile(updated);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.PROFILE, JSON.stringify(updated));
+      } else {
+        const verified = verifyStreak(DEFAULT_USER_PROFILE);
+        setUserProfile(verified);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.PROFILE, JSON.stringify(verified));
+      }
+
+      // 2. Load Vocabulary
+      const storedVocab = localStorage.getItem(LOCAL_STORAGE_KEYS.VOCABULARY);
+      if (storedVocab) {
+        setVocabulary(JSON.parse(storedVocab));
+      }
+
+      // 3. Load Bookmarks
+      const storedBookmarks = localStorage.getItem(LOCAL_STORAGE_KEYS.BOOKMARKS);
+      if (storedBookmarks) {
+        setBookmarkedIds(new Set(JSON.parse(storedBookmarks)));
+      }
+
+      // 4. Load Theme
+      const storedTheme = localStorage.getItem(LOCAL_STORAGE_KEYS.THEME);
+      if (storedTheme !== null) {
+        const isDark = storedTheme === "true";
+        setIsDarkMode(isDark);
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Synchronize document dark class on theme changes
   useEffect(() => {
@@ -249,21 +242,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       document.documentElement.classList.remove("dark");
     }
   }, [isDarkMode]);
-
-  // Daily Streak check on provider mount
-  useEffect(() => {
-    setUserProfile((prev) => {
-      const updated = verifyStreak(prev);
-      if (updated.dailyStreak !== prev.dailyStreak || updated.lastActiveDate !== prev.lastActiveDate) {
-        try {
-          localStorage.setItem(LOCAL_STORAGE_KEYS.PROFILE, JSON.stringify(updated));
-        } catch {
-          // ignore
-        }
-      }
-      return updated;
-    });
-  }, []);
 
   // Cloud Database Sync: Load user profile & vocabulary from Supabase
   const loadUserDataFromSupabase = useCallback(async (activeUser: User) => {

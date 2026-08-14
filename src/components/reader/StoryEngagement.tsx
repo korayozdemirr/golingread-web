@@ -192,17 +192,26 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
     if (isLiking) return;
     setIsLiking(true);
 
+    const nextIsLiked = !isLiked;
+    const nextCount = nextIsLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
+
+    // Optimistic instant UI update
+    setIsLiked(nextIsLiked);
+    setLikesCount(nextCount);
+
+    if (nextIsLiked) {
+      recordSocialAction("like"); // +5 XP reward
+    }
+
+    if (!user && nextIsLiked) {
+      setAuthIncentiveNotice("Sign in to save your likes across devices and earn +5 XP!");
+    }
+
     try {
       const result = await toggleStoryLike(storySlug, user?.id);
-      setLikesCount(result.count);
-      setIsLiked(result.isLiked);
-
-      if (result.isLiked) {
-        recordSocialAction("like"); // +5 XP reward
-      }
-
-      if (!user) {
-        setAuthIncentiveNotice("Sign in to save your likes across devices and earn +5 XP!");
+      if (typeof result.count === "number") {
+        setLikesCount(result.count);
+        setIsLiked(result.isLiked);
       }
     } catch {
       // ignore
