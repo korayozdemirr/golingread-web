@@ -236,7 +236,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Synchronize document dark class and mobile browser status bar theme on theme changes
   useEffect(() => {
-    const color = isDarkMode ? "#121212" : "#FDFBF7";
+    const color = isDarkMode ? "#0b0b0f" : "#FDFBF7";
 
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -245,14 +245,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     if (typeof document !== "undefined") {
-      let themeMeta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-      if (themeMeta) {
-        themeMeta.content = color;
+      const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
+      if (themeMetas.length > 0) {
+        themeMetas.forEach((meta) => {
+          (meta as HTMLMetaElement).content = color;
+        });
       } else {
-        themeMeta = document.createElement("meta");
-        themeMeta.name = "theme-color";
-        themeMeta.content = color;
-        document.head.appendChild(themeMeta);
+        const meta = document.createElement("meta");
+        meta.name = "theme-color";
+        meta.content = color;
+        document.head.appendChild(meta);
       }
     }
   }, [isDarkMode]);
