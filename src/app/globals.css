@@ -32,6 +32,7 @@
 html {
   background-color: #FDFBF7;
   color-scheme: light;
+  overscroll-behavior-y: none;
 }
 
 html.dark {
@@ -47,6 +48,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   min-height: 100dvh;
+  overscroll-behavior-y: none;
 }
 
 /* Safe area padding utilities for iOS Safari notch, dynamic island and bottom home bar */
