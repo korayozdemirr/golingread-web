@@ -141,7 +141,7 @@ export const ReaderCanvas: React.FC<ReaderCanvasProps> = ({
   const currentWordTheme = themeWordStyles[readingTheme];
 
   return (
-    <div className={`min-h-screen ${currentTheme.containerBg} transition-colors duration-200`}>
+    <div className={`min-h-dvh ${currentTheme.containerBg} transition-colors duration-200`}>
       {/* Top Toolbar */}
       <ReaderToolbar
         storyTitle={story.title}
